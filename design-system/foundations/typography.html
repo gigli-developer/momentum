@@ -1,0 +1,76 @@
+<!-- @dsCard group="Fundamentos" -->
+<style>
+  :root {
+    --bg: #0a0a0b; --surface: #131316; --surface-2: #1a1a1e; --line: #2a2a30;
+    --ink: #f4f4f5; --ink-muted: #a8a8b3; --ink-faint: #7c7c88; --accent: #ff5c1a;
+  }
+  body {
+    margin: 0; padding: 28px; background: var(--bg); color: var(--ink);
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .lede { font-size: 13px; color: var(--ink-muted); margin: 0 0 28px; max-width: 62ch; line-height: 1.55; }
+  .row { display: flex; align-items: baseline; gap: 20px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .spec { width: 190px; flex: none; font-size: 11px; color: var(--ink-faint); font-family: ui-monospace, monospace; }
+  .sample { min-width: 0; }
+  h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em;
+       color: var(--ink-faint); margin: 30px 0 6px; }
+  .note { font-size: 12px; color: var(--ink-muted); line-height: 1.6; margin: 10px 0 0; max-width: 62ch; }
+  .note strong { color: var(--ink); font-weight: 500; }
+  .num { font-variant-numeric: tabular-nums; }
+</style>
+
+<h1>Tipografía</h1>
+<p class="lede">
+  Inter variable, self-hosted (sin CDN). Todo número que cambie en el tiempo —contadores, rachas,
+  temporizador— va con <code style="color:var(--accent)">tabular-nums</code> para que no baile.
+</p>
+
+<div class="row">
+  <div class="spec">30px / 600 / -0.02em</div>
+  <div class="sample" style="font-size:30px;font-weight:600;letter-spacing:-0.02em">Buenas tardes, Lucas.</div>
+</div>
+<div class="row">
+  <div class="spec">22px / 600 / -0.01em</div>
+  <div class="sample" style="font-size:22px;font-weight:600;letter-spacing:-0.01em">Panel de hábitos</div>
+</div>
+<div class="row">
+  <div class="spec">16px / 600 — título tarjeta</div>
+  <div class="sample" style="font-size:16px;font-weight:600">Rueda de la vida</div>
+</div>
+<div class="row">
+  <div class="spec">14px / 400 — cuerpo</div>
+  <div class="sample" style="font-size:14px">Construí hábitos sólidos y seguí tu progreso día a día.</div>
+</div>
+<div class="row">
+  <div class="spec">14px / 400 / ink-muted</div>
+  <div class="sample" style="font-size:14px;color:var(--ink-muted)">Evaluá tu equilibrio en las áreas clave de tu vida.</div>
+</div>
+<div class="row">
+  <div class="spec">12px / 400 / ink-faint</div>
+  <div class="sample" style="font-size:12px;color:var(--ink-faint)">La racha sobrevive si marcás antes de que termine el día siguiente.</div>
+</div>
+<div class="row">
+  <div class="spec">11px / 600 / 0.14em / upper</div>
+  <div class="sample" style="font-size:11px;font-weight:600;text-transform:uppercase;letter-spacing:0.14em;color:var(--ink-faint)">Resumen semanal</div>
+</div>
+<div class="row">
+  <div class="spec">60px / 600 / tabular</div>
+  <div class="sample num" style="font-size:60px;font-weight:600;letter-spacing:-0.02em">25:00</div>
+</div>
+
+<h2>Voz</h2>
+<p class="note">
+  Voseo rioplatense, sostenido en toda la interfaz sin excepciones: <strong>Construí</strong>,
+  <strong>Empezá</strong>, <strong>Organizá</strong>, <strong>Definí</strong>,
+  <strong>Evaluá</strong>, <strong>Recordá</strong>, <strong>Guardá</strong>,
+  <strong>Llevás</strong>. Los estados vacíos hablan como una persona, no como un sistema:
+  «Sin tareas todavía», no «No hay elementos».
+</p>
+
+<h2>Regla del acento</h2>
+<p class="note">
+  Texto en naranja nunca por debajo de peso 500. En pesos finos sobre negro puro el naranja saturado
+  vibra y se lee mal.
+</p>

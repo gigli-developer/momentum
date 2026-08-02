@@ -1,0 +1,156 @@
+<!-- @dsCard group="Patrones" -->
+<style>
+  :root {
+    --bg: #0a0a0b; --surface: #131316; --surface-2: #1a1a1e; --surface-3: #212126;
+    --line: #2a2a30; --line-strong: #3a3a42;
+    --ink: #f4f4f5; --ink-muted: #a8a8b3; --ink-faint: #7c7c88;
+    --accent: #ff5c1a; --accent-ink: #1a0a02;
+    --cat-1: #ff5c1a; --cat-2: #ffb020; --cat-3: #ff7a5c; --cat-4: #e0663d;
+    --cat-5: #f59e0b; --cat-6: #d4552e;
+  }
+  body {
+    margin: 0; padding: 28px; background: var(--bg); color: var(--ink);
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .lede { font-size: 13px; color: var(--ink-muted); margin: 0 0 22px; max-width: 66ch; line-height: 1.55; }
+  .card { border: 1px solid var(--line); background: var(--surface); border-radius: 20px; padding: 22px; overflow-x: auto; }
+  table { border-collapse: separate; border-spacing: 0; font-size: 13px; }
+  th { font-weight: 400; text-align: left; }
+  .wk { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.12em; padding-bottom: 8px; text-align: center; }
+  .wk.a { color: var(--accent); } .wk.b { color: var(--ink-faint); }
+  .dh { padding: 0 2px 8px; }
+  .dh div { width: 26px; margin: 0 auto; display: flex; flex-direction: column; align-items: center;
+            border-radius: 6px; padding: 2px 0; }
+  .dh .i { font-size: 9px; text-transform: uppercase; color: var(--ink-faint); }
+  .dh .n { font-size: 11px; color: var(--ink-muted); font-variant-numeric: tabular-nums; }
+  .dh.today div { background: rgba(255,92,26,.15); }
+  .dh.today .i, .dh.today .n { color: var(--accent); }
+  .dh.today .n { font-weight: 600; }
+  .hn { padding: 4px 16px 4px 0; white-space: nowrap; }
+  .hn span.dot { display: inline-block; width: 6px; height: 6px; border-radius: 999px; margin-right: 6px; vertical-align: middle; }
+  .hn .streak { display: inline-flex; align-items: center; gap: 2px; font-size: 11px; color: var(--accent); margin-left: 6px; font-variant-numeric: tabular-nums; }
+  td { padding: 4px 2px; }
+  .box { width: 18px; height: 18px; margin: 0 auto; border-radius: 5px; border: 1px solid var(--line-strong); }
+  .box.on { border-color: transparent; }
+  .box.future { opacity: .3; }
+  .cap { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-faint); padding-bottom: 8px; }
+  .note { font-size: 12px; color: var(--ink-muted); line-height: 1.6; margin-top: 14px; max-width: 66ch; }
+  .note strong { color: var(--ink); font-weight: 500; }
+</style>
+
+<h1>Grilla de hábitos</h1>
+<p class="lede">
+  El componente más denso de la app. En el diseño original los checks usaban rosa, violeta y celeste
+  sin que el color codificara nada legible; acá cada fila lleva <strong>un</strong> color de la
+  paleta análoga y ese color identifica al hábito en todos los módulos.
+</p>
+
+<div class="card">
+  <table>
+    <thead>
+      <tr>
+        <th></th>
+        <th colspan="7" class="wk a">Semana 1</th>
+        <th colspan="7" class="wk b">Semana 2</th>
+      </tr>
+      <tr>
+        <th class="cap">Hábito</th>
+        <th class="dh"><div><span class="i">l</span><span class="n">3</span></div></th>
+        <th class="dh"><div><span class="i">m</span><span class="n">4</span></div></th>
+        <th class="dh"><div><span class="i">x</span><span class="n">5</span></div></th>
+        <th class="dh"><div><span class="i">j</span><span class="n">6</span></div></th>
+        <th class="dh"><div><span class="i">v</span><span class="n">7</span></div></th>
+        <th class="dh"><div><span class="i">s</span><span class="n">8</span></div></th>
+        <th class="dh"><div><span class="i">d</span><span class="n">9</span></div></th>
+        <th class="dh"><div><span class="i">l</span><span class="n">10</span></div></th>
+        <th class="dh"><div><span class="i">m</span><span class="n">11</span></div></th>
+        <th class="dh today"><div><span class="i">x</span><span class="n">12</span></div></th>
+        <th class="dh"><div><span class="i">j</span><span class="n">13</span></div></th>
+        <th class="dh"><div><span class="i">v</span><span class="n">14</span></div></th>
+        <th class="dh"><div><span class="i">s</span><span class="n">15</span></div></th>
+        <th class="dh"><div><span class="i">d</span><span class="n">16</span></div></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <th class="hn"><span class="dot" style="background:var(--cat-1)"></span>😴 Dormir 8h
+          <span class="streak">🔥 13</span></th>
+        <td><div class="box on" style="background:var(--cat-1)"></div></td>
+        <td><div class="box on" style="background:var(--cat-1)"></div></td>
+        <td><div class="box"></div></td>
+        <td><div class="box on" style="background:var(--cat-1)"></div></td>
+        <td><div class="box on" style="background:var(--cat-1)"></div></td>
+        <td><div class="box on" style="background:var(--cat-1)"></div></td>
+        <td><div class="box on" style="background:var(--cat-1)"></div></td>
+        <td><div class="box on" style="background:var(--cat-1)"></div></td>
+        <td><div class="box on" style="background:var(--cat-1)"></div></td>
+        <td><div class="box on" style="background:var(--cat-1)"></div></td>
+        <td><div class="box future"></div></td>
+        <td><div class="box future"></div></td>
+        <td><div class="box future"></div></td>
+        <td><div class="box future"></div></td>
+      </tr>
+      <tr>
+        <th class="hn"><span class="dot" style="background:var(--cat-2)"></span>🧘 Meditar
+          <span class="streak">🔥 3</span></th>
+        <td><div class="box"></div></td>
+        <td><div class="box on" style="background:var(--cat-2)"></div></td>
+        <td><div class="box on" style="background:var(--cat-2)"></div></td>
+        <td><div class="box"></div></td>
+        <td><div class="box on" style="background:var(--cat-2)"></div></td>
+        <td><div class="box"></div></td>
+        <td><div class="box on" style="background:var(--cat-2)"></div></td>
+        <td><div class="box on" style="background:var(--cat-2)"></div></td>
+        <td><div class="box on" style="background:var(--cat-2)"></div></td>
+        <td><div class="box"></div></td>
+        <td><div class="box future"></div></td>
+        <td><div class="box future"></div></td>
+        <td><div class="box future"></div></td>
+        <td><div class="box future"></div></td>
+      </tr>
+      <tr>
+        <th class="hn"><span class="dot" style="background:var(--cat-3)"></span>🏋️ Ejercicio</th>
+        <td><div class="box on" style="background:var(--cat-3)"></div></td>
+        <td><div class="box on" style="background:var(--cat-3)"></div></td>
+        <td><div class="box on" style="background:var(--cat-3)"></div></td>
+        <td><div class="box on" style="background:var(--cat-3)"></div></td>
+        <td><div class="box"></div></td>
+        <td><div class="box on" style="background:var(--cat-3)"></div></td>
+        <td><div class="box on" style="background:var(--cat-3)"></div></td>
+        <td><div class="box"></div></td>
+        <td><div class="box on" style="background:var(--cat-3)"></div></td>
+        <td><div class="box"></div></td>
+        <td><div class="box future"></div></td>
+        <td><div class="box future"></div></td>
+        <td><div class="box future"></div></td>
+        <td><div class="box future"></div></td>
+      </tr>
+      <tr>
+        <th class="hn"><span class="dot" style="background:var(--cat-4)"></span>📖 Leer 10'</th>
+        <td><div class="box"></div></td>
+        <td><div class="box on" style="background:var(--cat-4)"></div></td>
+        <td><div class="box"></div></td>
+        <td><div class="box on" style="background:var(--cat-4)"></div></td>
+        <td><div class="box on" style="background:var(--cat-4)"></div></td>
+        <td><div class="box"></div></td>
+        <td><div class="box"></div></td>
+        <td><div class="box on" style="background:var(--cat-4)"></div></td>
+        <td><div class="box on" style="background:var(--cat-4)"></div></td>
+        <td><div class="box on" style="background:var(--cat-4)"></div></td>
+        <td><div class="box future"></div></td>
+        <td><div class="box future"></div></td>
+        <td><div class="box future"></div></td>
+        <td><div class="box future"></div></td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<p class="note">
+  Reglas: la columna de hábitos es <strong>sticky</strong> y la grilla scrollea en horizontal, nunca
+  el body. Los días futuros van al <strong>30% de opacidad y deshabilitados</strong> — no se puede
+  marcar mañana. Los encabezados de semana alternan acento / gris para dar ritmo sin sumar un color
+  nuevo. En mobile la vista cambia a los últimos 12 días.
+</p>

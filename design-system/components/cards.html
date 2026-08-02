@@ -1,0 +1,108 @@
+<!-- @dsCard group="Componentes" -->
+<style>
+  :root {
+    --bg: #0a0a0b; --surface: #131316; --surface-2: #1a1a1e; --surface-3: #212126;
+    --line: #2a2a30; --line-strong: #3a3a42;
+    --ink: #f4f4f5; --ink-muted: #a8a8b3; --ink-faint: #7c7c88;
+    --accent: #ff5c1a; --accent-ink: #1a0a02; --cat-1: #ff5c1a; --cat-2: #ffb020; --cat-3: #ff7a5c;
+  }
+  body {
+    margin: 0; padding: 28px; background: var(--bg); color: var(--ink);
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .lede { font-size: 13px; color: var(--ink-muted); margin: 0 0 26px; max-width: 62ch; line-height: 1.55; }
+  h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em;
+       color: var(--ink-faint); margin: 26px 0 12px; }
+  .card { border: 1px solid var(--line); background: var(--surface); border-radius: 20px; padding: 22px; }
+  .panel { border: 1px solid var(--line); background: var(--surface-2); border-radius: 16px; padding: 16px; }
+  .tile { width: 48px; height: 48px; flex: none; border-radius: 12px; border: 1px solid rgba(255,92,26,.45);
+          background: rgba(255,92,26,.1); color: var(--accent); display: grid; place-items: center; }
+  .head { display: flex; gap: 16px; align-items: flex-start; }
+  .head h3 { margin: 0; font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+  .head p { margin: 3px 0 0; font-size: 13px; color: var(--ink-muted); line-height: 1.45; }
+  .grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+  .st { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-faint); }
+  .num { font-variant-numeric: tabular-nums; }
+  .bar { height: 6px; border-radius: 999px; background: var(--surface-3); overflow: hidden; margin-top: 10px; }
+  .bar > i { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+  .strip { display: flex; gap: 4px; }
+  .strip span { height: 14px; flex: 1; border-radius: 3px; background: var(--surface-3); }
+  .hab { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+  .hab .n { width: 84px; flex: none; font-size: 11px; color: var(--ink-muted); overflow: hidden;
+            text-overflow: ellipsis; white-space: nowrap; }
+  .dashed { border-style: dashed; border-color: rgba(255,92,26,.45); background: rgba(255,92,26,.04); }
+  .note { font-size: 12px; color: var(--ink-muted); line-height: 1.6; margin-top: 12px; max-width: 62ch; }
+  .note strong { color: var(--ink); font-weight: 500; }
+</style>
+
+<h1>Tarjetas</h1>
+<p class="lede">
+  Tres niveles de superficie y nada más: <code>surface</code> para la tarjeta,
+  <code>surface-2</code> para el panel adentro, <code>surface-3</code> para pistas y rieles. Anidar
+  un cuarto nivel es señal de que la jerarquía está mal.
+</p>
+
+<h2>Encabezado de tarjeta</h2>
+<div class="card">
+  <div class="head">
+    <span class="tile">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>
+    </span>
+    <div>
+      <h3>Panel de hábitos</h3>
+      <p>Construí hábitos sólidos y seguí tu progreso día a día.</p>
+    </div>
+  </div>
+</div>
+
+<h2>Tarjeta de módulo con preview en vivo</h2>
+<div class="grid2">
+  <div class="card">
+    <div class="head">
+      <span class="tile">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.801 10A10 10 0 1 1 17 3.335"/><path d="m9 11 3 3L22 4"/></svg>
+      </span>
+      <div>
+        <h3>Panel de hábitos</h3>
+        <p>Construí hábitos sólidos y seguí tu progreso día a día.</p>
+      </div>
+    </div>
+    <div class="panel" style="margin-top:16px">
+      <div class="hab"><span class="n">😴 Dormir 8h</span><span class="strip"><span style="background:var(--cat-1)"></span><span style="background:var(--cat-1)"></span><span></span><span style="background:var(--cat-1)"></span><span style="background:var(--cat-1)"></span><span style="background:var(--cat-1)"></span><span style="background:var(--cat-1)"></span></span></div>
+      <div class="hab"><span class="n">🧘 Meditar</span><span class="strip"><span></span><span style="background:var(--cat-2)"></span><span style="background:var(--cat-2)"></span><span></span><span style="background:var(--cat-2)"></span><span></span><span style="background:var(--cat-2)"></span></span></div>
+      <div class="hab" style="margin-bottom:0"><span class="n">🏋️ Ejercicio</span><span class="strip"><span style="background:var(--cat-3)"></span><span style="background:var(--cat-3)"></span><span style="background:var(--cat-3)"></span><span style="background:var(--cat-3)"></span><span></span><span style="background:var(--cat-3)"></span><span style="background:var(--cat-3)"></span></span></div>
+      <p style="margin:12px 0 0;font-size:12px;color:var(--ink-muted)"><strong style="color:var(--ink)">63%</strong> esta semana</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="st">Resumen semanal</div>
+    <p class="num" style="margin:10px 0 0;font-size:30px;font-weight:600">63<span style="font-size:18px;font-weight:400;color:var(--ink-faint)">%</span></p>
+    <p style="margin:2px 0 0;font-size:13px;color:var(--ink-muted)">32/56 casillas marcadas esta semana</p>
+    <div class="bar"><i style="width:63%"></i></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px">
+      <div class="panel">
+        <div class="st">Enfoque del mes</div>
+        <p class="num" style="margin:4px 0 0;font-size:20px;font-weight:600">1h 40m</p>
+      </div>
+      <div class="panel">
+        <div class="st">Hábitos activos</div>
+        <p class="num" style="margin:4px 0 0;font-size:20px;font-weight:600">8</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<h2>Tarjeta de acento — el premio semanal</h2>
+<div class="card dashed" style="max-width:320px">
+  <div class="st" style="color:var(--accent)">🎁 Tu premio</div>
+  <p style="margin:10px 0 12px;font-size:13px;color:var(--ink-muted)">Si cerrás la semana, ¿con qué te vas a premiar?</p>
+  <input style="width:100%;box-sizing:border-box;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);color:var(--ink);padding:8px 12px;font:inherit;font-size:14px" value="Un asado con amigos" />
+  <button style="width:100%;margin-top:12px;height:36px;border:0;border-radius:12px;background:var(--accent);color:var(--accent-ink);font:inherit;font-weight:600;cursor:pointer">Marcar como cobrado</button>
+</div>
+<p class="note">
+  El borde punteado en acento se usa <strong>una sola vez por pantalla</strong>, para la cosa que
+  querés que el usuario mire. Si aparece dos veces, deja de funcionar.
+</p>

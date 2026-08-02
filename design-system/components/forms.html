@@ -1,0 +1,123 @@
+<!-- @dsCard group="Componentes" -->
+<style>
+  :root {
+    --bg: #0a0a0b; --surface: #131316; --surface-2: #1a1a1e; --surface-3: #212126;
+    --line: #2a2a30; --line-strong: #3a3a42;
+    --ink: #f4f4f5; --ink-muted: #a8a8b3; --ink-faint: #7c7c88;
+    --accent: #ff5c1a; --accent-ink: #1a0a02; --cat-2: #ffb020;
+  }
+  body {
+    margin: 0; padding: 28px; background: var(--bg); color: var(--ink);
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .lede { font-size: 13px; color: var(--ink-muted); margin: 0 0 26px; max-width: 62ch; line-height: 1.55; }
+  h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em;
+       color: var(--ink-faint); margin: 26px 0 12px; }
+  .stack { display: grid; gap: 14px; max-width: 380px; }
+  label { display: block; font-size: 12px; font-weight: 500; color: var(--ink-muted); margin-bottom: 6px; }
+  .field { width: 100%; box-sizing: border-box; border-radius: 12px; border: 1px solid var(--line);
+           background: var(--surface-2); color: var(--ink); padding: 8px 12px; font: inherit; font-size: 14px; }
+  .field:hover { border-color: var(--line-strong); }
+  .field.focused { border-color: rgba(255,92,26,.6); outline: 2px solid var(--accent); outline-offset: 2px; }
+  .field::placeholder { color: var(--ink-faint); }
+  .inline { display: flex; gap: 8px; align-items: center; }
+  .add { width: 32px; height: 32px; flex: none; border: 0; border-radius: 12px; background: var(--accent);
+         color: var(--accent-ink); display: grid; place-items: center; cursor: pointer; }
+  .add.off { background: transparent; border: 1px solid var(--line); color: var(--ink-faint); }
+  .check { display: flex; align-items: center; gap: 10px; background: none; border: 0; padding: 0;
+           cursor: pointer; font: inherit; color: var(--ink); text-align: left; }
+  .box { width: 18px; height: 18px; flex: none; border-radius: 5px; border: 1px solid var(--line-strong);
+         display: grid; place-items: center; }
+  .box.on { border-color: transparent; background: var(--accent); }
+  .box.cat { background: var(--cat-2); border-color: transparent; }
+  .done { color: var(--ink-faint); text-decoration: line-through; }
+  .tabs { display: inline-flex; gap: 4px; padding: 4px; border: 1px solid var(--line);
+          background: var(--surface-2); border-radius: 12px; }
+  .tab { border: 0; background: none; border-radius: 8px; padding: 6px 12px; font: inherit; font-size: 14px;
+         color: var(--ink-muted); cursor: pointer; display: inline-flex; align-items: center; gap: 6px; }
+  .tab.on { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .days { display: flex; gap: 6px; }
+  .day { width: 32px; height: 32px; border-radius: 999px; border: 1px solid var(--line);
+         background: none; color: var(--ink-muted); font: inherit; font-size: 12px; font-weight: 500; cursor: pointer; }
+  .day.today { border-color: rgba(255,92,26,.6); color: var(--accent); }
+  .day.on { background: var(--accent); color: var(--accent-ink); border-color: transparent; }
+  .note { font-size: 12px; color: var(--ink-muted); line-height: 1.6; margin-top: 12px; max-width: 62ch; }
+  .note strong { color: var(--ink); font-weight: 500; }
+</style>
+
+<h1>Formularios y selección</h1>
+<p class="lede">
+  Toda la carga de datos de la app pasa por estos cinco controles. No hay modales de «crear
+  elemento»: se escribe en el lugar donde el dato va a vivir.
+</p>
+
+<h2>Campos</h2>
+<div class="stack">
+  <div>
+    <label for="a">Campo de texto</label>
+    <input id="a" class="field" placeholder="Ej: Caminar 30 minutos" />
+  </div>
+  <div>
+    <label for="b">Con foco</label>
+    <input id="b" class="field focused" value="Lanzar landing" />
+  </div>
+  <div>
+    <label for="c">Selector</label>
+    <select id="c" class="field">
+      <option>⭐ Ser referente en mi profesión</option>
+    </select>
+  </div>
+  <div>
+    <label for="d">Área de texto</label>
+    <textarea id="d" class="field" rows="2" placeholder="¿Qué estás postergando?"></textarea>
+  </div>
+</div>
+
+<h2>Alta rápida — InlineAdd</h2>
+<div class="stack">
+  <div class="inline">
+    <input class="field" style="padding:6px 12px" value="Ver el atardecer" />
+    <button class="add" aria-label="Agregar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </div>
+  <div class="inline">
+    <input class="field" style="padding:6px 12px" placeholder="Nueva tarea" />
+    <button class="add off" aria-label="Agregar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>
+    </button>
+  </div>
+</div>
+<p class="note">El botón sólo se enciende cuando hay texto. Enter equivale a hacer clic.</p>
+
+<h2>Checkbox</h2>
+<div class="stack">
+  <button class="check"><span class="box"></span> Ir a entrenar</button>
+  <button class="check"><span class="box on"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1a0a02" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span> <span class="done">Almorzar algo rico y nutritivo</span></button>
+  <button class="check"><span class="box cat"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1a0a02" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span> Con color de hábito</button>
+</div>
+
+<h2>Pestañas y selector de día</h2>
+<div class="stack" style="max-width:none">
+  <div>
+    <div class="tabs">
+      <button class="tab">Personal</button>
+      <button class="tab on">Profesional</button>
+    </div>
+  </div>
+  <div class="days">
+    <button class="day">L</button>
+    <button class="day">M</button>
+    <button class="day">X</button>
+    <button class="day today">J</button>
+    <button class="day">V</button>
+    <button class="day">S</button>
+    <button class="day on">D</button>
+  </div>
+</div>
+<p class="note">
+  Iniciales a la argentina: <strong>X</strong> para miércoles. Borde naranja = hoy;
+  relleno naranja = día seleccionado. Son dos estados distintos y pueden coexistir.
+</p>

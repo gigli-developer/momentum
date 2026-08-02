@@ -1,0 +1,148 @@
+@import 'tailwindcss';
+@import '@fontsource-variable/inter';
+
+/* ------------------------------------------------------------------
+   Momentum — design tokens
+   Una sola familia cromática (naranja + análogos) para que los módulos
+   con datos densos no rompan la unidad visual del resto de la app.
+   ------------------------------------------------------------------ */
+@theme {
+  /* Superficies */
+  --color-bg: #0a0a0b;
+  --color-surface: #131316;
+  --color-surface-2: #1a1a1e;
+  --color-surface-3: #212126;
+  --color-line: #2a2a30;
+  --color-line-strong: #3a3a42;
+
+  /* Texto — contrastes verificados sobre --color-surface */
+  --color-ink: #f4f4f5;
+  --color-ink-muted: #a8a8b3;
+  --color-ink-faint: #7c7c88;
+
+  /* Acento */
+  --color-accent: #ff5c1a;
+  --color-accent-hover: #ff7038;
+  --color-accent-press: #e34a0d;
+  --color-accent-ink: #1a0a02;
+
+  /* Rampa de datos: monocromática naranja, para intensidad/progreso */
+  --color-ramp-1: #4a2412;
+  --color-ramp-2: #7c3a15;
+  --color-ramp-3: #b4501a;
+  --color-ramp-4: #ff5c1a;
+  --color-ramp-5: #ff8a4d;
+
+  /* Análogos: sólo para series categóricas (hábitos, áreas de la rueda) */
+  --color-cat-1: #ff5c1a;
+  --color-cat-2: #ffb020;
+  --color-cat-3: #ff7a5c;
+  --color-cat-4: #e0663d;
+  --color-cat-5: #f59e0b;
+  --color-cat-6: #d4552e;
+  --color-cat-7: #ffc766;
+  --color-cat-8: #c2410c;
+
+  /* Estado */
+  --color-positive: #4ade80;
+  --color-negative: #f87171;
+
+  /* Tipografía */
+  --font-sans:
+    'Inter Variable', 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+
+  /* Radios */
+  --radius-tile: 0.75rem;
+  --radius-card: 1rem;
+  --radius-panel: 1.25rem;
+}
+
+@layer base {
+  html {
+    color-scheme: dark;
+  }
+
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-ink);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  input,
+  textarea,
+  select,
+  button {
+    font: inherit;
+    color: inherit;
+  }
+
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--color-ink-faint);
+  }
+
+  input[type='range'] {
+    accent-color: var(--color-accent);
+    cursor: pointer;
+  }
+
+  select option {
+    background-color: var(--color-surface-2);
+    color: var(--color-ink);
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--color-accent) 35%, transparent);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--color-accent);
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Scrollbars discretas */
+  ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-line-strong);
+    border-radius: 999px;
+    border: 3px solid var(--color-bg);
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: var(--color-ink-faint);
+  }
+}
+
+@layer utilities {
+  .glow-accent {
+    box-shadow:
+      0 0 0 1px color-mix(in oklab, var(--color-accent) 40%, transparent),
+      0 8px 30px -12px color-mix(in oklab, var(--color-accent) 55%, transparent);
+  }
+
+  .animate-in-up {
+    animation: in-up 0.28s cubic-bezier(0.16, 1, 0.3, 1) both;
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+@keyframes in-up {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}

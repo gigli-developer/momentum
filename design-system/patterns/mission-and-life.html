@@ -1,0 +1,83 @@
+<!-- @dsCard group="Patrones" -->
+<style>
+  :root {
+    --bg: #0a0a0b; --surface: #131316; --surface-2: #1a1a1e; --surface-3: #212126;
+    --line: #2a2a30; --ink: #f4f4f5; --ink-muted: #a8a8b3; --ink-faint: #7c7c88;
+    --accent: #ff5c1a; --accent-ink: #1a0a02; --ramp-3: #b4501a;
+  }
+  body {
+    margin: 0; padding: 28px; background: var(--bg); color: var(--ink);
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .lede { font-size: 13px; color: var(--ink-muted); margin: 0 0 22px; max-width: 66ch; line-height: 1.55; }
+  h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em; color: var(--ink-faint); margin: 30px 0 12px; }
+  .card { border: 1px solid var(--line); background: var(--surface); border-radius: 20px; padding: 22px; }
+  .hero { background: var(--accent); border-radius: 16px; padding: 20px; }
+  .hero .k { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.18em; color: rgba(26,10,2,.7); margin: 0; }
+  .hero .v { margin: 8px 0 0; font-size: 24px; font-weight: 600; letter-spacing: -0.02em; color: var(--accent-ink); }
+  .weeks { display: flex; flex-direction: column; gap: 3px; margin-top: 14px; }
+  .yr { display: grid; grid-template-columns: repeat(52, minmax(0, 1fr)); gap: 3px; }
+  .yr span { aspect-ratio: 1; border-radius: 1px; background: var(--surface-3); }
+  .yr span.lived { background: var(--ramp-3); }
+  .yr span.now { background: var(--accent); box-shadow: 0 0 0 2px rgba(255,92,26,.4); }
+  .note { font-size: 12px; color: var(--ink-muted); line-height: 1.6; margin-top: 14px; max-width: 66ch; }
+  .note strong { color: var(--ink); font-weight: 500; }
+  .num { font-variant-numeric: tabular-nums; }
+  .bar { height: 8px; border-radius: 999px; background: var(--surface-3); overflow: hidden; flex: 1; }
+  .bar > i { display: block; height: 100%; background: var(--accent); border-radius: 999px; }
+</style>
+
+<h1>Misión del día y calendario de vida</h1>
+<p class="lede">
+  Los dos momentos donde la app sube el volumen. Aparecen una vez por pantalla y no compiten con
+  nada más.
+</p>
+
+<h2>Hero de misión — el único bloque en naranja sólido</h2>
+<div class="card">
+  <div class="hero">
+    <p class="k">Misión de hoy</p>
+    <p class="v">Ir a ver el mar</p>
+  </div>
+</div>
+<p class="note">
+  Sobre el naranja sólido el texto va en <strong>accent-ink</strong> (#1A0A02), no en blanco: 6.1:1
+  contra 3.1:1. El label secundario usa el mismo color al 70% de opacidad, así el bloque mantiene
+  una sola familia de texto en vez de mezclar blanco y negro.
+</p>
+
+<h2>Calendario de vida — 52 semanas por año</h2>
+<div class="card">
+  <p style="margin:0;font-size:22px;font-weight:600;letter-spacing:-0.01em">
+    Llevás vividas <span class="num">1.778</span> de <span class="num">4.160</span> semanas.
+  </p>
+  <div style="display:flex;align-items:center;gap:16px;margin-top:14px">
+    <div class="bar"><i style="width:43%"></i></div>
+    <span class="num" style="font-size:18px;font-weight:600">43%</span>
+  </div>
+
+  <div class="weeks" id="weeks"></div>
+  <p class="note" style="margin-top:12px">El cuadrito naranja con anillo es esta semana.</p>
+</div>
+
+<p class="note">
+  El total sale de <strong>52 semanas exactas × expectativa</strong>, no de 52,18: si el número que
+  se lee arriba no coincide con la cantidad de puntos dibujados, el patrón pierde toda su fuerza.
+</p>
+
+<script>
+  const lived = 1778;
+  const rows = [];
+  for (let y = 0; y < 80; y++) {
+    let cells = '';
+    for (let w = 0; w < 52; w++) {
+      const i = y * 52 + w;
+      const cls = i === lived ? 'now' : i < lived ? 'lived' : '';
+      cells += '<span class="' + cls + '"></span>';
+    }
+    rows.push('<div class="yr">' + cells + '</div>');
+  }
+  document.getElementById('weeks').innerHTML = rows.join('');
+</script>

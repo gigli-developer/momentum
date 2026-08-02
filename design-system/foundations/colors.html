@@ -1,0 +1,105 @@
+<!-- @dsCard group="Fundamentos" -->
+<style>
+  :root {
+    --bg: #0a0a0b; --surface: #131316; --surface-2: #1a1a1e; --surface-3: #212126;
+    --line: #2a2a30; --line-strong: #3a3a42;
+    --ink: #f4f4f5; --ink-muted: #a8a8b3; --ink-faint: #7c7c88;
+    --accent: #ff5c1a; --accent-hover: #ff7038; --accent-press: #e34a0d; --accent-ink: #1a0a02;
+    --ramp-1: #4a2412; --ramp-2: #7c3a15; --ramp-3: #b4501a; --ramp-4: #ff5c1a; --ramp-5: #ff8a4d;
+    --cat-1: #ff5c1a; --cat-2: #ffb020; --cat-3: #ff7a5c; --cat-4: #e0663d;
+    --cat-5: #f59e0b; --cat-6: #d4552e; --cat-7: #ffc766; --cat-8: #c2410c;
+    --positive: #4ade80; --negative: #f87171;
+  }
+  body {
+    margin: 0; padding: 28px; background: var(--bg); color: var(--ink);
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .lede { font-size: 13px; color: var(--ink-muted); margin: 0 0 28px; max-width: 60ch; line-height: 1.55; }
+  h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em;
+       color: var(--ink-faint); margin: 28px 0 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(148px, 1fr)); gap: 10px; }
+  .sw { border: 1px solid var(--line); border-radius: 12px; overflow: hidden; background: var(--surface); }
+  .chip { height: 56px; }
+  .meta { padding: 8px 10px; }
+  .name { font-size: 12px; font-weight: 500; }
+  .hex { font-size: 11px; color: var(--ink-faint); font-family: ui-monospace, monospace; }
+  .ramp { display: flex; border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+  .ramp div { flex: 1; height: 46px; display: grid; place-items: end center; padding-bottom: 5px;
+              font-size: 10px; font-family: ui-monospace, monospace; }
+  .note { margin-top: 10px; font-size: 12px; color: var(--ink-muted); line-height: 1.6; }
+  .note strong { color: var(--ink); font-weight: 500; }
+</style>
+
+<h1>Color</h1>
+<p class="lede">
+  Una sola familia cromática. El acento naranja manda, y los datos usan una rampa monocromática o
+  análogos cercanos — nunca azules, verdes o violetas sueltos, que era lo que rompía la unidad del
+  diseño original.
+</p>
+
+<h2>Superficies</h2>
+<div class="grid">
+  <div class="sw"><div class="chip" style="background:#0a0a0b"></div><div class="meta"><div class="name">bg</div><div class="hex">#0A0A0B</div></div></div>
+  <div class="sw"><div class="chip" style="background:#131316"></div><div class="meta"><div class="name">surface</div><div class="hex">#131316</div></div></div>
+  <div class="sw"><div class="chip" style="background:#1a1a1e"></div><div class="meta"><div class="name">surface-2</div><div class="hex">#1A1A1E</div></div></div>
+  <div class="sw"><div class="chip" style="background:#212126"></div><div class="meta"><div class="name">surface-3</div><div class="hex">#212126</div></div></div>
+  <div class="sw"><div class="chip" style="background:#2a2a30"></div><div class="meta"><div class="name">line</div><div class="hex">#2A2A30</div></div></div>
+  <div class="sw"><div class="chip" style="background:#3a3a42"></div><div class="meta"><div class="name">line-strong</div><div class="hex">#3A3A42</div></div></div>
+</div>
+
+<h2>Texto</h2>
+<div class="grid">
+  <div class="sw"><div class="chip" style="background:#f4f4f5"></div><div class="meta"><div class="name">ink</div><div class="hex">#F4F4F5 · 17.4:1</div></div></div>
+  <div class="sw"><div class="chip" style="background:#a8a8b3"></div><div class="meta"><div class="name">ink-muted</div><div class="hex">#A8A8B3 · 7.9:1</div></div></div>
+  <div class="sw"><div class="chip" style="background:#7c7c88"></div><div class="meta"><div class="name">ink-faint</div><div class="hex">#7C7C88 · 4.2:1</div></div></div>
+</div>
+<p class="note">
+  <strong>ink-faint</strong> queda por debajo de 4.5:1 — se usa sólo en texto de 11px o menos que
+  acompaña, nunca en información que haga falta leer para operar.
+</p>
+
+<h2>Acento</h2>
+<div class="grid">
+  <div class="sw"><div class="chip" style="background:#ff5c1a"></div><div class="meta"><div class="name">accent</div><div class="hex">#FF5C1A</div></div></div>
+  <div class="sw"><div class="chip" style="background:#ff7038"></div><div class="meta"><div class="name">accent-hover</div><div class="hex">#FF7038</div></div></div>
+  <div class="sw"><div class="chip" style="background:#e34a0d"></div><div class="meta"><div class="name">accent-press</div><div class="hex">#E34A0D</div></div></div>
+  <div class="sw"><div class="chip" style="background:#1a0a02"></div><div class="meta"><div class="name">accent-ink</div><div class="hex">#1A0A02</div></div></div>
+</div>
+<p class="note">
+  Sobre naranja va <strong>accent-ink</strong>, no blanco: da 6.1:1 contra los 3.1:1 del blanco.
+</p>
+
+<h2>Rampa de datos — intensidad y progreso</h2>
+<div class="ramp">
+  <div style="background:#4a2412;color:#f4f4f5">1</div>
+  <div style="background:#7c3a15;color:#f4f4f5">2</div>
+  <div style="background:#b4501a;color:#f4f4f5">3</div>
+  <div style="background:#ff5c1a;color:#1a0a02">4</div>
+  <div style="background:#ff8a4d;color:#1a0a02">5</div>
+</div>
+
+<h2>Análogos — series categóricas (hábitos, áreas)</h2>
+<div class="ramp">
+  <div style="background:#ff5c1a;color:#1a0a02">1</div>
+  <div style="background:#ffb020;color:#1a0a02">2</div>
+  <div style="background:#ff7a5c;color:#1a0a02">3</div>
+  <div style="background:#e0663d;color:#1a0a02">4</div>
+  <div style="background:#f59e0b;color:#1a0a02">5</div>
+  <div style="background:#d4552e;color:#f4f4f5">6</div>
+  <div style="background:#ffc766;color:#1a0a02">7</div>
+  <div style="background:#c2410c;color:#f4f4f5">8</div>
+</div>
+<p class="note">
+  Ocho tonos como máximo. Si una lista necesita más de ocho colores, el problema es la lista.
+</p>
+
+<h2>Estado</h2>
+<div class="grid">
+  <div class="sw"><div class="chip" style="background:#4ade80"></div><div class="meta"><div class="name">positive</div><div class="hex">#4ADE80</div></div></div>
+  <div class="sw"><div class="chip" style="background:#f87171"></div><div class="meta"><div class="name">negative</div><div class="hex">#F87171</div></div></div>
+</div>
+<p class="note">
+  Los únicos dos colores fuera de la familia naranja. Reservados para deltas y acciones destructivas.
+</p>
