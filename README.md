@@ -1,7 +1,7 @@
 # Momentum
 
 Un *life OS* personal en una sola app: hábitos, ritual matutino, planificación semanal, objetivos,
-rueda de la vida, estadísticas, memento mori, temporizador de enfoque y sueños.
+rueda de la vida, estadísticas, memento mori y sueños.
 
 Interfaz en español rioplatense (voseo), dark mode, y **local-first**: los datos viven en el
 navegador, sin cuenta ni backend.
@@ -16,10 +16,9 @@ navegador, sin cuenta ni backend.
 | Ritual Matutino | `/ritual` | Misión del día, pilar, SAPO, proyectos, nivel de energía y logros |
 | Planificador semanal | `/semana` | Tareas por día, navegación entre semanas y premio semanal |
 | Objetivos y metas | `/objetivos` | Metas por trimestre y año, colgadas de un sueño |
-| Rueda de la vida | `/rueda` | Radar de 8 áreas con comparación contra el mes anterior |
+| Rueda de la vida | `/rueda` | Radar de áreas configurables (3 a 10) con comparación contra el mes anterior |
 | Estadísticas y rachas | `/estadisticas` | Progreso semanal, mejores rachas y hábitos, evolución 7d vs 7d |
 | Memento Mori | `/memento` | Semanas vividas sobre el total y calendario de vida completo |
-| Temporizador de enfoque | `/enfoque` | Pomodoro con ciclos, registro de bloques y duraciones configurables |
 | Sueños por cumplir | `/suenos` | Sueños personales y profesionales, con avance de sus objetivos |
 | Ajustes | `/ajustes` | Perfil, pilares, proyectos, export/import y reset |
 
@@ -33,6 +32,19 @@ Son dos cosas distintas y esa distinción es la que sostiene el modelo de datos:
 
 Por eso el selector de sueño en `/objetivos` filtra y, al cargar una meta con un sueño elegido, la
 asocia sola. Sin ese vínculo los dos módulos serían la misma lista con distinto nombre.
+
+### Áreas de la rueda
+
+Las áreas de la rueda de la vida **no están fijas en el código**: son datos del usuario
+(`AppData.lifeAreas`) y se pueden agregar, renombrar y eliminar desde el propio módulo. El radar se
+dibuja con tantos ejes como áreas haya.
+
+- Mínimo **3** (con menos no se forma un polígono) y máximo **10** (con más el radar deja de leerse).
+- Al eliminar un área se borran también sus puntajes históricos, para que no queden datos colgados
+  en el export.
+- Al agregar un área, arranca en 5 en todos los meses ya puntuados, así el polígono no se hunde de
+  golpe hacia el centro.
+- Las áreas nuevas no aparecen en la comparación con el mes anterior hasta que ese mes tenga dato.
 
 ---
 
@@ -77,7 +89,7 @@ src/
     layout/       AppShell (sidebar + barra mobile) y PageHeader.
   modules/
     <modulo>/     Una carpeta por módulo, con su página y sus piezas propias.
-    registry.tsx  Definición de los 9 módulos: ruta, título, descripción e ícono.
+    registry.tsx  Definición de los módulos: ruta, título, descripción e ícono.
 design-system/    Previews HTML del design system, sincronizadas con Claude Design.
 ```
 
@@ -118,7 +130,7 @@ Decisiones que se apartan a propósito del mockup original:
 
 ## Estado actual y qué sigue
 
-Los nueve módulos están implementados y funcionan sobre datos reales y persistentes.
+Los ocho módulos están implementados y funcionan sobre datos reales y persistentes.
 
 Pendiente:
 

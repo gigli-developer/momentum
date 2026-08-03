@@ -8,7 +8,6 @@ import {
   Star,
   Sun,
   Target,
-  Timer,
 } from 'lucide-react'
 import type { ComponentType } from 'react'
 
@@ -71,13 +70,6 @@ export const MODULES: ModuleDef[] = [
     title: 'Memento Mori',
     description: 'Recordá lo que realmente importa y viví con propósito.',
     Icon: Hourglass,
-  },
-  {
-    id: 'enfoque',
-    path: '/enfoque',
-    title: 'Temporizador de enfoque',
-    description: 'Enfocate profundamente en lo que realmente importa.',
-    Icon: Timer,
   },
   {
     id: 'suenos',

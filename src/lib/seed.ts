@@ -1,6 +1,23 @@
 import { addDays, differenceInCalendarDays, subDays, subMonths } from 'date-fns'
 import { monthKey, toISO, todayISO, weekStart, weekStartISO } from './date'
-import type { AppData, Goal, Habit, Task, WheelScores } from './types'
+import type { AppData, Goal, Habit, LifeArea, Task, WheelScores } from './types'
+
+/**
+ * Áreas por defecto de la rueda. El usuario las puede renombrar, borrar o sumar
+ * las suyas; estos ids se mantienen estables porque son los que traía la v1.
+ */
+export function defaultLifeAreas(): LifeArea[] {
+  return [
+    { id: 'salud', label: 'Salud y deporte', order: 0 },
+    { id: 'familia', label: 'Familia y amor', order: 1 },
+    { id: 'trabajo', label: 'Trabajo y finanzas', order: 2 },
+    { id: 'ocio', label: 'Ocio y amistad', order: 3 },
+    { id: 'tiempo', label: 'Tiempo para mí', order: 4 },
+    { id: 'emocional', label: 'Emocional', order: 5 },
+    { id: 'educativa', label: 'Educativa y cultural', order: 6 },
+    { id: 'espiritual', label: 'Espiritual y ética', order: 7 },
+  ]
+}
 
 /** PRNG determinístico: el seed se ve igual en cada carga y en cada máquina. */
 function mulberry32(seed: number) {
@@ -287,6 +304,7 @@ export function buildSeed(): AppData {
     },
     dreams,
     goals,
+    lifeAreas: defaultLifeAreas(),
     wheel: {
       [monthKey(today)]: { month: monthKey(today), scores: THIS_MONTH },
       [monthKey(subMonths(today, 1))]: {
@@ -294,13 +312,6 @@ export function buildSeed(): AppData {
         scores: LAST_MONTH,
       },
     },
-    focusSettings: { focus: 25, short: 5, long: 15, longEvery: 4 },
-    focusSessions: Array.from({ length: 9 }, (_, i) => ({
-      id: `focus-${i}`,
-      finishedAt: subDays(today, Math.floor(i / 2)).toISOString(),
-      minutes: 25,
-      label: i % 3 === 0 ? 'Lanzar landing' : 'Enfoque',
-    })),
   }
 }
 
@@ -317,8 +328,7 @@ export function buildEmpty(): AppData {
     rewards: {},
     dreams: [],
     goals: [],
+    lifeAreas: defaultLifeAreas(),
     wheel: {},
-    focusSettings: { focus: 25, short: 5, long: 15, longEvery: 4 },
-    focusSessions: [],
   }
 }

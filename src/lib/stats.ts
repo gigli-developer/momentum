@@ -127,9 +127,6 @@ export function evolution(data: AppData): EvolutionRow[] {
   const tasksDoneIn = (range: Set<string>) =>
     data.tasks.filter((t) => t.done && range.has(t.date)).length
 
-  const focusIn = (range: Set<string>) =>
-    data.focusSessions.filter((s) => range.has(s.finishedAt.slice(0, 10))).length
-
   return [
     {
       label: 'Rituales completados',
@@ -145,11 +142,6 @@ export function evolution(data: AppData): EvolutionRow[] {
       label: 'Tareas completadas',
       value: tasksDoneIn(thisWeek),
       delta: tasksDoneIn(thisWeek) - tasksDoneIn(prevWeek),
-    },
-    {
-      label: 'Bloques de enfoque',
-      value: focusIn(thisWeek),
-      delta: focusIn(thisWeek) - focusIn(prevWeek),
     },
     {
       label: 'Objetivos cumplidos (total)',
@@ -188,20 +180,13 @@ export function lifeProgress(birthDate: ISODate, lifeExpectancy: number): LifePr
   }
 }
 
-/* ------------------------------------------------------------------- Enfoque */
+/* ------------------------------------------------------------------ Rituales */
 
-export function focusMinutesToday(data: AppData): number {
-  const today = todayISO()
-  return data.focusSessions
-    .filter((s) => s.finishedAt.slice(0, 10) === today)
-    .reduce((acc, s) => acc + s.minutes, 0)
-}
-
-export function focusMinutesThisMonth(data: AppData): number {
+export function ritualsCompletedThisMonth(data: AppData): number {
   const month = monthKeyOf(todayISO())
-  return data.focusSessions
-    .filter((s) => monthKeyOf(s.finishedAt.slice(0, 10)) === month)
-    .reduce((acc, s) => acc + s.minutes, 0)
+  return Object.values(data.rituals).filter(
+    (r) => r.completedAt !== null && monthKeyOf(r.date) === month,
+  ).length
 }
 
 /* ------------------------------------------------------------------- Logros */

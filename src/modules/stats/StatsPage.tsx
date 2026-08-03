@@ -6,7 +6,12 @@ import { Card, Panel, SectionTitle } from '@/components/ui/Card'
 import { EmptyState } from '@/components/ui/EmptyState'
 import { ProgressBar } from '@/components/ui/Progress'
 import { catColor } from '@/lib/cn'
-import { evolution, focusMinutesThisMonth, habitStats, weeklyHabitProgress } from '@/lib/stats'
+import {
+  evolution,
+  habitStats,
+  ritualsCompletedThisMonth,
+  weeklyHabitProgress,
+} from '@/lib/stats'
 import { snapshot, useStore } from '@/lib/store'
 
 export function StatsPage() {
@@ -27,7 +32,7 @@ export function StatsPage() {
   )
   const bestHabits = useMemo(() => [...stats].sort((a, b) => b.rate - a.rate).slice(0, 5), [stats])
 
-  const focusMinutes = focusMinutesThisMonth(data)
+  const ritualsThisMonth = ritualsCompletedThisMonth(data)
 
   if (data.habits.length === 0) {
     return (
@@ -68,10 +73,8 @@ export function StatsPage() {
 
           <div className="mt-5 grid grid-cols-2 gap-3">
             <Panel>
-              <SectionTitle>Enfoque del mes</SectionTitle>
-              <p className="mt-1 text-xl font-semibold tabular-nums">
-                {Math.floor(focusMinutes / 60)}h {focusMinutes % 60}m
-              </p>
+              <SectionTitle>Rituales del mes</SectionTitle>
+              <p className="mt-1 text-xl font-semibold tabular-nums">{ritualsThisMonth}</p>
             </Panel>
             <Panel>
               <SectionTitle>Hábitos activos</SectionTitle>

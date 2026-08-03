@@ -23,10 +23,11 @@
 
 <h1>Rueda de la vida</h1>
 <p class="lede">
-  Radar de ocho ejes, dibujado a mano en SVG (sin librería de charts). El problema del diseño
-  original era la comparación: la serie del mes pasado iba en gris casi invisible y la leyenda usaba
-  rectángulos vacíos. Acá la serie de comparación va en <strong>ámbar punteado</strong> y las
-  muestras de la leyenda están rellenas.
+  Radar dibujado a mano en SVG (sin librería de charts), con <strong>tantos ejes como áreas tenga
+  definidas el usuario</strong>: las áreas son datos, no constantes, y se pueden agregar, renombrar
+  y borrar. Mínimo 3, máximo 10. El problema del diseño original era la comparación: la serie del
+  mes pasado iba en gris casi invisible y la leyenda usaba rectángulos vacíos. Acá la serie de
+  comparación va en <strong>ámbar punteado</strong> y las muestras de la leyenda están rellenas.
 </p>
 
 <div class="card">
@@ -75,8 +76,14 @@
 </div>
 
 <p class="note">
-  Reglas: la serie de comparación se dibuja <strong>primero</strong> para que quede por debajo; sólo
-  la serie activa lleva puntos en los vértices; el eje que se está editando con el slider se pinta
-  en acento junto con su etiqueta, así el usuario ve qué está moviendo. Las etiquetas de más de 12
-  caracteres se parten en dos líneas para no pisar el gráfico.
+  Reglas: los ejes se reparten en <code>2π / cantidad de áreas</code>, así que el mismo componente
+  sirve para un triángulo de 3 o un decágono de 10. La serie de comparación se dibuja
+  <strong>primero</strong> para que quede por debajo; sólo la serie activa lleva puntos en los
+  vértices; el eje que se está editando con el slider se pinta en acento junto con su etiqueta, así
+  el usuario ve qué está moviendo. Las etiquetas de más de 12 caracteres se parten en dos líneas
+  para no pisar el gráfico, y en las miniaturas del inicio se ocultan.
+</p>
+<p class="note">
+  En el editor, el botón de borrar queda <strong>deshabilitado con tooltip explicativo</strong> al
+  llegar al mínimo de 3, en vez de desaparecer: el usuario tiene que entender por qué no puede.
 </p>

@@ -18,7 +18,6 @@ import {
 import { habitStats, lifeProgress, weeklyHabitProgress } from '@/lib/stats'
 import { snapshot, useStore } from '@/lib/store'
 import { GRID_MODULES } from '@/modules/registry'
-import { LIFE_AREAS } from '@/lib/types'
 import { RadarChart } from '@/modules/wheel/RadarChart'
 
 function greeting(): string {
@@ -59,9 +58,11 @@ export function DashboardPage() {
   const yearGoals = data.goals.filter((g) => g.year === year)
   const goalsDone = yearGoals.filter((g) => g.done).length
   const wheelScores = data.wheel[monthKey(new Date())]?.scores
-  const wheelAverage = wheelScores
-    ? LIFE_AREAS.reduce((acc, a) => acc + (wheelScores[a.id] ?? 0), 0) / LIFE_AREAS.length
-    : null
+  const wheelAverage =
+    wheelScores && data.lifeAreas.length > 0
+      ? data.lifeAreas.reduce((acc, a) => acc + (wheelScores[a.id] ?? 5), 0) /
+        data.lifeAreas.length
+      : null
   const topStreaks = [...stats].sort((a, b) => b.streak - a.streak).slice(0, 3)
   const dreamsPending = data.dreams.filter((d) => !d.achieved)
   const reward = data.rewards[weekStartISO()]
@@ -211,6 +212,8 @@ export function DashboardPage() {
         <div className="w-28 shrink-0">
           {wheelScores ? (
             <RadarChart
+              areas={data.lifeAreas}
+              showLabels={false}
               series={[
                 {
                   id: 'mini',
@@ -228,6 +231,9 @@ export function DashboardPage() {
           <p className="text-2xl font-semibold tabular-nums">
             {wheelAverage === null ? '—' : wheelAverage.toFixed(1)}
             <span className="text-sm font-normal text-ink-faint">/10</span>
+          </p>
+          <p className="mt-0.5 text-xs text-ink-faint">
+            {data.lifeAreas.length} áreas
           </p>
         </div>
       </PreviewShell>
@@ -274,24 +280,6 @@ export function DashboardPage() {
         ) : (
           <Muted>Cargá tu fecha de nacimiento para activarlo.</Muted>
         )}
-      </PreviewShell>
-    ),
-
-    /* -------------------------------------------------------------- Enfoque */
-    enfoque: (
-      <PreviewShell className="flex items-center justify-between">
-        <div>
-          <Muted>Bloque de enfoque</Muted>
-          <p className="text-3xl font-semibold tabular-nums tracking-tight">
-            {String(data.focusSettings.focus).padStart(2, '0')}:00
-          </p>
-        </div>
-        <div className="text-right">
-          <Muted>Bloques hoy</Muted>
-          <p className="text-xl font-semibold tabular-nums">
-            {data.focusSessions.filter((s) => s.finishedAt.slice(0, 10) === today).length}
-          </p>
-        </div>
       </PreviewShell>
     ),
 

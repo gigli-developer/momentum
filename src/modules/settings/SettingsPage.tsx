@@ -208,7 +208,7 @@ export function SettingsPage() {
               readOnly
               rows={4}
               className="font-mono text-[11px]"
-              value={`${data.habits.length} hábitos · ${data.goals.length} objetivos · ${data.dreams.length} sueños · ${data.tasks.length} tareas · ${data.focusSessions.length} bloques`}
+              value={`${data.habits.length} hábitos · ${data.goals.length} objetivos · ${data.dreams.length} sueños · ${data.tasks.length} tareas · ${data.lifeAreas.length} áreas de la rueda`}
             />
           </Panel>
         </Card>

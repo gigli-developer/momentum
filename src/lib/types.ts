@@ -102,45 +102,26 @@ export interface Goal {
 
 /* -------------------------------------------------------- Rueda de la vida */
 
-export const LIFE_AREAS = [
-  { id: 'salud', label: 'Salud y deporte' },
-  { id: 'familia', label: 'Familia y amor' },
-  { id: 'trabajo', label: 'Trabajo y finanzas' },
-  { id: 'ocio', label: 'Ocio y amistad' },
-  { id: 'tiempo', label: 'Tiempo para mí' },
-  { id: 'emocional', label: 'Emocional' },
-  { id: 'educativa', label: 'Educativa y cultural' },
-  { id: 'espiritual', label: 'Espiritual y ética' },
-] as const
+/**
+ * Las áreas las define el usuario: puede agregar, renombrar y eliminar.
+ * El radar se dibuja con tantos ejes como áreas haya.
+ */
+export interface LifeArea {
+  id: ID
+  label: string
+  order: number
+}
 
-export type LifeAreaId = (typeof LIFE_AREAS)[number]['id']
+/** Menos de 3 ejes no forman un polígono; más de 10 no se lee. */
+export const MIN_LIFE_AREAS = 3
+export const MAX_LIFE_AREAS = 10
 
-export type WheelScores = Record<LifeAreaId, number>
+/** `areaId -> puntaje 0-10`. */
+export type WheelScores = Record<ID, number>
 
 export interface WheelEntry {
   month: ISOMonth
-  /** Cada área de 0 a 10. */
   scores: WheelScores
-}
-
-/* ------------------------------------------------ Temporizador de enfoque */
-
-export type FocusMode = 'focus' | 'short' | 'long'
-
-export interface FocusSettings {
-  focus: number
-  short: number
-  long: number
-  /** Cada cuántos bloques de enfoque toca el descanso largo. */
-  longEvery: number
-}
-
-export interface FocusSession {
-  id: ID
-  /** Timestamp ISO en que terminó el bloque. */
-  finishedAt: string
-  minutes: number
-  label: string
 }
 
 /* -------------------------------------------------------------- Memento */
@@ -166,7 +147,6 @@ export interface AppData {
   rewards: Record<ISODate, WeekReward>
   dreams: Dream[]
   goals: Goal[]
+  lifeAreas: LifeArea[]
   wheel: Record<ISOMonth, WheelEntry>
-  focusSettings: FocusSettings
-  focusSessions: FocusSession[]
 }

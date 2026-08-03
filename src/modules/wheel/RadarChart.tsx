@@ -1,4 +1,4 @@
-import { LIFE_AREAS, type WheelScores } from '@/lib/types'
+import type { ID, LifeArea, WheelScores } from '@/lib/types'
 
 export interface RadarSeries {
   id: string
@@ -16,47 +16,54 @@ const RADIUS = 118
 const MAX = 10
 const RINGS = [2, 4, 6, 8, 10]
 
-function angleOf(index: number): number {
-  return -Math.PI / 2 + (index * 2 * Math.PI) / LIFE_AREAS.length
+function angleOf(index: number, count: number): number {
+  return -Math.PI / 2 + (index * 2 * Math.PI) / count
 }
 
-function point(index: number, value: number): [number, number] {
-  const theta = angleOf(index)
+function point(index: number, count: number, value: number): [number, number] {
+  const theta = angleOf(index, count)
   const r = (value / MAX) * RADIUS
   return [CENTER + r * Math.cos(theta), CENTER + r * Math.sin(theta)]
 }
 
 function polygon(values: number[]): string {
-  return values.map((v, i) => point(i, v).join(',')).join(' ')
+  return values.map((v, i) => point(i, values.length, v).join(',')).join(' ')
 }
 
 /** Parte etiquetas largas en dos líneas para que no se pisen con el gráfico. */
 function wrap(label: string): string[] {
   if (label.length <= 12) return [label]
   const words = label.split(' ')
+  if (words.length === 1) return [label]
   const mid = Math.ceil(words.length / 2)
   return [words.slice(0, mid).join(' '), words.slice(mid).join(' ')]
 }
 
 interface RadarChartProps {
+  areas: LifeArea[]
   series: RadarSeries[]
   /** Resalta un área mientras se edita su puntaje. */
-  highlight?: string | null
+  highlight?: ID | null
+  /** `false` en las miniaturas, donde no entran. */
+  showLabels?: boolean
 }
 
-export function RadarChart({ series, highlight }: RadarChartProps) {
+export function RadarChart({ areas, series, highlight, showLabels = true }: RadarChartProps) {
+  const count = areas.length
+  if (count < 3) return null
+
   return (
     <svg
       viewBox={`0 0 ${SIZE} ${SIZE}`}
       className="mx-auto w-full max-w-[380px]"
       role="img"
-      aria-label={`Rueda de la vida: ${series.map((s) => s.label).join(' y ')}`}
+      aria-label={`Rueda de la vida con ${count} áreas: ${series.map((s) => s.label).join(' y ')}`}
     >
       {/* Anillos de referencia */}
       {RINGS.map((ring) => (
         <polygon
           key={ring}
-          points={polygon(LIFE_AREAS.map(() => ring))}
+          points={polygon(areas.map(() => ring))}
           fill="none"
           stroke="var(--color-line)"
           strokeWidth={1}
@@ -64,8 +71,8 @@ export function RadarChart({ series, highlight }: RadarChartProps) {
       ))}
 
       {/* Ejes */}
-      {LIFE_AREAS.map((area, i) => {
-        const [x, y] = point(i, MAX)
+      {areas.map((area, i) => {
+        const [x, y] = point(i, count, MAX)
         return (
           <line
             key={area.id}
@@ -81,7 +88,7 @@ export function RadarChart({ series, highlight }: RadarChartProps) {
 
       {/* Series: la de comparación se dibuja primero para quedar por debajo */}
       {[...series].reverse().map((s) => {
-        const values = LIFE_AREAS.map((a) => s.scores[a.id] ?? 0)
+        const values = areas.map((a) => s.scores[a.id] ?? 0)
         return (
           <g key={s.id}>
             <polygon
@@ -95,8 +102,8 @@ export function RadarChart({ series, highlight }: RadarChartProps) {
             />
             {!s.dashed
               ? values.map((v, i) => {
-                  const [x, y] = point(i, v)
-                  return <circle key={i} cx={x} cy={y} r={3} fill={s.color} />
+                  const [x, y] = point(i, count, v)
+                  return <circle key={areas[i].id} cx={x} cy={y} r={3} fill={s.color} />
                 })
               : null}
           </g>
@@ -104,34 +111,36 @@ export function RadarChart({ series, highlight }: RadarChartProps) {
       })}
 
       {/* Etiquetas de las áreas */}
-      {LIFE_AREAS.map((area, i) => {
-        const theta = angleOf(i)
-        const lx = CENTER + (RADIUS + 26) * Math.cos(theta)
-        const ly = CENTER + (RADIUS + 26) * Math.sin(theta)
-        const cos = Math.cos(theta)
-        const anchor = Math.abs(cos) < 0.25 ? 'middle' : cos > 0 ? 'start' : 'end'
-        const lines = wrap(area.label)
-        const active = highlight === area.id
+      {showLabels
+        ? areas.map((area, i) => {
+            const theta = angleOf(i, count)
+            const lx = CENTER + (RADIUS + 26) * Math.cos(theta)
+            const ly = CENTER + (RADIUS + 26) * Math.sin(theta)
+            const cos = Math.cos(theta)
+            const anchor = Math.abs(cos) < 0.25 ? 'middle' : cos > 0 ? 'start' : 'end'
+            const lines = wrap(area.label)
+            const active = highlight === area.id
 
-        return (
-          <text
-            key={area.id}
-            x={lx}
-            y={ly - (lines.length - 1) * 6}
-            textAnchor={anchor}
-            dominantBaseline="middle"
-            className="text-[10px]"
-            fill={active ? 'var(--color-accent)' : 'var(--color-ink-muted)'}
-            fontWeight={active ? 600 : 400}
-          >
-            {lines.map((line, li) => (
-              <tspan key={line} x={lx} dy={li === 0 ? 0 : 12}>
-                {line}
-              </tspan>
-            ))}
-          </text>
-        )
-      })}
+            return (
+              <text
+                key={area.id}
+                x={lx}
+                y={ly - (lines.length - 1) * 6}
+                textAnchor={anchor}
+                dominantBaseline="middle"
+                className="text-[10px]"
+                fill={active ? 'var(--color-accent)' : 'var(--color-ink-muted)'}
+                fontWeight={active ? 600 : 400}
+              >
+                {lines.map((line, li) => (
+                  <tspan key={line} x={lx} dy={li === 0 ? 0 : 12}>
+                    {line}
+                  </tspan>
+                ))}
+              </text>
+            )
+          })
+        : null}
     </svg>
   )
 }

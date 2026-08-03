@@ -1,18 +1,17 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { monthKey, todayISO, weekStartISO } from './date'
-import { buildEmpty, buildSeed } from './seed'
+import { buildEmpty, buildSeed, defaultLifeAreas } from './seed'
 import { STORAGE_KEY, appStorage, newId } from './storage'
 import type {
   AppData,
   Dream,
-  FocusSettings,
   Goal,
   Habit,
   ID,
   ISODate,
   ISOMonth,
-  LifeAreaId,
+  LifeArea,
   Pillar,
   Profile,
   Quarter,
@@ -20,6 +19,7 @@ import type {
   Scope,
   Task,
 } from './types'
+import { MAX_LIFE_AREAS, MIN_LIFE_AREAS } from './types'
 
 interface Actions {
   /* Perfil */
@@ -60,11 +60,10 @@ interface Actions {
   removeGoal: (id: ID) => void
 
   /* Rueda de la vida */
-  setWheelScore: (month: ISOMonth, area: LifeAreaId, value: number) => void
-
-  /* Enfoque */
-  updateFocusSettings: (patch: Partial<FocusSettings>) => void
-  logFocusSession: (minutes: number, label: string) => void
+  setWheelScore: (month: ISOMonth, areaId: ID, value: number) => void
+  addLifeArea: (label: string) => void
+  renameLifeArea: (id: ID, label: string) => void
+  removeLifeArea: (id: ID) => void
 
   /* Datos */
   replaceAll: (data: AppData) => void
@@ -74,15 +73,9 @@ interface Actions {
 
 export type Store = AppData & Actions
 
-const EMPTY_SCORES = {
-  salud: 5,
-  familia: 5,
-  trabajo: 5,
-  ocio: 5,
-  tiempo: 5,
-  emocional: 5,
-  educativa: 5,
-  espiritual: 5,
+/** Un mes sin puntuar arranca en 5 (el medio) para todas las áreas vigentes. */
+function neutralScores(areas: LifeArea[]): Record<ID, number> {
+  return Object.fromEntries(areas.map((a) => [a.id, 5]))
 }
 
 export const useStore = create<Store>()(
@@ -285,28 +278,60 @@ export const useStore = create<Store>()(
       removeGoal: (id) => set((s) => ({ goals: s.goals.filter((g) => g.id !== id) })),
 
       /* ------------------------------------------------ Rueda de la vida */
-      setWheelScore: (month, area, value) =>
+      setWheelScore: (month, areaId, value) =>
         set((s) => {
-          const entry = s.wheel[month] ?? { month, scores: { ...EMPTY_SCORES } }
+          const entry = s.wheel[month] ?? { month, scores: neutralScores(s.lifeAreas) }
           return {
             wheel: {
               ...s.wheel,
-              [month]: { month, scores: { ...entry.scores, [area]: value } },
+              [month]: { month, scores: { ...entry.scores, [areaId]: value } },
             },
           }
         }),
 
-      /* ---------------------------------------------------------- Enfoque */
-      updateFocusSettings: (patch) =>
-        set((s) => ({ focusSettings: { ...s.focusSettings, ...patch } })),
+      addLifeArea: (label) =>
+        set((s) => {
+          if (s.lifeAreas.length >= MAX_LIFE_AREAS) return s
+          const area: LifeArea = { id: newId(), label, order: s.lifeAreas.length }
+          // El área nueva arranca en 5 en todos los meses ya puntuados, para que
+          // el polígono no se hunda hacia el centro de golpe.
+          const wheel = Object.fromEntries(
+            Object.entries(s.wheel).map(([month, entry]) => [
+              month,
+              { ...entry, scores: { ...entry.scores, [area.id]: 5 } },
+            ]),
+          )
+          return { lifeAreas: [...s.lifeAreas, area], wheel }
+        }),
 
-      logFocusSession: (minutes, label) =>
+      renameLifeArea: (id, label) =>
         set((s) => ({
-          focusSessions: [
-            { id: newId(), finishedAt: new Date().toISOString(), minutes, label },
-            ...s.focusSessions,
-          ].slice(0, 500),
+          lifeAreas: s.lifeAreas.map((a) => (a.id === id ? { ...a, label } : a)),
         })),
+
+      removeLifeArea: (id) =>
+        set((s) => {
+          if (s.lifeAreas.length <= MIN_LIFE_AREAS) return s
+          // Se limpian también los puntajes históricos: si no, quedan colgados
+          // en el export y reaparecerían al reimportar.
+          const wheel = Object.fromEntries(
+            Object.entries(s.wheel).map(([month, entry]) => [
+              month,
+              {
+                ...entry,
+                scores: Object.fromEntries(
+                  Object.entries(entry.scores).filter(([areaId]) => areaId !== id),
+                ),
+              },
+            ]),
+          )
+          return {
+            lifeAreas: s.lifeAreas
+              .filter((a) => a.id !== id)
+              .map((a, i) => ({ ...a, order: i })),
+            wheel,
+          }
+        }),
 
       /* ------------------------------------------------------------ Datos */
       replaceAll: (data) => set(() => ({ ...data })),
@@ -315,8 +340,20 @@ export const useStore = create<Store>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 1,
+      version: 2,
       storage: createJSONStorage(() => appStorage),
+      // v1 → v2: las áreas de la rueda pasaron a ser datos del usuario y se
+      // eliminó el temporizador de enfoque. Sin esto, quien ya venía usando la
+      // app se queda sin áreas y la rueda revienta.
+      migrate: (persisted, version) => {
+        const data = persisted as Record<string, unknown>
+        if (version < 2) {
+          if (!Array.isArray(data.lifeAreas)) data.lifeAreas = defaultLifeAreas()
+          delete data.focusSettings
+          delete data.focusSessions
+        }
+        return data as unknown as AppData
+      },
       // Sólo persistimos datos: las acciones se reconstruyen en cada arranque.
       partialize: (s): AppData => ({
         profile: s.profile,
@@ -329,9 +366,8 @@ export const useStore = create<Store>()(
         rewards: s.rewards,
         dreams: s.dreams,
         goals: s.goals,
+        lifeAreas: s.lifeAreas,
         wheel: s.wheel,
-        focusSettings: s.focusSettings,
-        focusSessions: s.focusSessions,
       }),
     },
   ),
@@ -367,8 +403,7 @@ export function snapshot(s: Store): AppData {
     rewards: s.rewards,
     dreams: s.dreams,
     goals: s.goals,
+    lifeAreas: s.lifeAreas,
     wheel: s.wheel,
-    focusSettings: s.focusSettings,
-    focusSessions: s.focusSessions,
   }
 }
