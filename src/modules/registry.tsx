@@ -3,6 +3,7 @@ import {
   CalendarDays,
   CircleCheckBig,
   Hourglass,
+  NotebookPen,
   PieChart,
   Settings,
   Star,
@@ -42,6 +43,13 @@ export const MODULES: ModuleDef[] = [
     title: 'Planificador semanal',
     description: 'Organizá tu semana, tus tareas y tu enfoque.',
     Icon: CalendarDays,
+  },
+  {
+    id: 'journal',
+    path: '/journal',
+    title: 'Journal',
+    description: 'Cerrá el día: tildá lo que cumpliste y grabate leyendo tu journal.',
+    Icon: NotebookPen,
   },
   {
     id: 'objetivos',

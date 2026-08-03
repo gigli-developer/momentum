@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { Link } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
-import { ArrowUpRight, Flame } from 'lucide-react'
+import { ArrowUpRight, Flame, Mic } from 'lucide-react'
 import { IconTile } from '@/components/ui/Card'
 import { ProgressBar } from '@/components/ui/Progress'
 import { catColor, cn } from '@/lib/cn'
@@ -15,7 +15,7 @@ import {
   todayISO,
   weekStartISO,
 } from '@/lib/date'
-import { habitStats, lifeProgress, weeklyHabitProgress } from '@/lib/stats'
+import { habitStats, journalStreak, lifeProgress, weeklyHabitProgress } from '@/lib/stats'
 import { snapshot, useStore } from '@/lib/store'
 import { GRID_MODULES } from '@/modules/registry'
 import { RadarChart } from '@/modules/wheel/RadarChart'
@@ -64,6 +64,8 @@ export function DashboardPage() {
         data.lifeAreas.length
       : null
   const topStreaks = [...stats].sort((a, b) => b.streak - a.streak).slice(0, 3)
+  const journalToday = data.journal[today]
+  const journalRacha = useMemo(() => journalStreak(data), [data])
   const dreamsPending = data.dreams.filter((d) => !d.achieved)
   const reward = data.rewards[weekStartISO()]
 
@@ -173,6 +175,40 @@ export function DashboardPage() {
         {reward?.text ? (
           <p className="mt-3 truncate text-xs text-accent">🎁 {reward.text}</p>
         ) : null}
+      </PreviewShell>
+    ),
+
+    /* -------------------------------------------------------------- Journal */
+    journal: (
+      <PreviewShell>
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <Muted>Hoy</Muted>
+            <p className="text-sm text-ink">
+              {journalToday?.closedAt
+                ? 'Día cerrado ✓'
+                : todayTasks.length === 0
+                  ? 'Sin tareas anotadas'
+                  : `${todayTasks.filter((t) => t.done).length}/${todayTasks.length} cumplidas`}
+            </p>
+          </div>
+          <span
+            className={cn(
+              'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs',
+              (journalToday?.recordings.length ?? 0) > 0
+                ? 'bg-accent/12 text-accent'
+                : 'bg-surface-3 text-ink-faint',
+            )}
+          >
+            <Mic className="size-3" />
+            {journalToday?.recordings.length ?? 0}
+          </span>
+        </div>
+        <p className="mt-3 text-xs text-ink-faint">
+          {journalRacha > 0
+            ? `Racha de ${journalRacha} ${journalRacha === 1 ? 'día' : 'días'} escribiendo`
+            : 'Todavía no cerraste ningún día'}
+        </p>
       </PreviewShell>
     ),
 

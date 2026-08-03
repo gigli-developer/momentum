@@ -1,0 +1,125 @@
+<!-- @dsCard group="Patrones" -->
+<style>
+  :root {
+    --bg: #0a0a0b; --surface: #131316; --surface-2: #1a1a1e; --surface-3: #212126;
+    --line: #2a2a30; --line-strong: #3a3a42;
+    --ink: #f4f4f5; --ink-muted: #a8a8b3; --ink-faint: #7c7c88;
+    --accent: #ff5c1a; --accent-hover: #ff7038; --accent-ink: #1a0a02; --negative: #f87171;
+  }
+  body {
+    margin: 0; padding: 28px; background: var(--bg); color: var(--ink);
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .lede { font-size: 13px; color: var(--ink-muted); margin: 0 0 22px; max-width: 66ch; line-height: 1.55; }
+  h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em;
+       color: var(--ink-faint); margin: 28px 0 10px; }
+  .card { border: 1px solid var(--line); background: var(--surface); border-radius: 20px; padding: 20px; max-width: 560px; }
+  .panel { border: 1px solid var(--line); background: var(--surface-2); border-radius: 16px; padding: 16px; }
+  .row { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; border: 0;
+         border-radius: 12px; height: 36px; padding: 0 14px; font: inherit; font-size: 14px; cursor: pointer; }
+  .primary { background: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .lg { height: 44px; padding: 0 20px; }
+  .sec { background: var(--surface-2); color: var(--ink); border: 1px solid var(--line-strong); }
+  .ghost { background: none; color: var(--ink-muted); width: 32px; padding: 0; }
+  .num { font-variant-numeric: tabular-nums; }
+  .dot { width: 10px; height: 10px; border-radius: 999px; background: var(--negative); }
+  .pulse { animation: p 1.4s ease-in-out infinite; }
+  @keyframes p { 50% { opacity: .35 } }
+  .tile { width: 36px; height: 36px; flex: none; border-radius: 12px; background: rgba(255,92,26,.12);
+          color: var(--accent); display: grid; place-items: center; }
+  .bar { height: 36px; border-radius: 999px; background: var(--surface-3); margin-top: 12px;
+         display: grid; place-items: center; color: var(--ink-faint); font-size: 12px; }
+  .note { font-size: 12px; color: var(--ink-muted); line-height: 1.6; margin-top: 12px; max-width: 66ch; }
+  .note strong { color: var(--ink); font-weight: 500; }
+  .warn { color: var(--negative); }
+  .cap { font-size: 11px; color: var(--ink-faint); font-family: ui-monospace, monospace; margin: 8px 0 0; }
+  .stack { display: grid; gap: 14px; }
+</style>
+
+<h1>Grabador del journal</h1>
+<p class="lede">
+  El journal se escribe a mano en papel. La app no tiene campo de texto: guarda el
+  <strong>audio de la persona leyendo lo que escribió</strong>. Por eso el control central es un
+  grabador, no un editor.
+</p>
+
+<h2>Estados del grabador</h2>
+<div class="stack">
+  <div class="panel">
+    <div class="row" style="justify-content:space-between">
+      <span style="font-size:14px">Todavía no grabaste nada de este día.</span>
+      <button class="btn primary lg">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19v3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><rect x="9" y="2" width="6" height="13" rx="3"/></svg>
+        Grabar lectura
+      </button>
+    </div>
+    <p class="cap">idle</p>
+  </div>
+
+  <div class="panel">
+    <div class="row">
+      <span class="dot pulse"></span>
+      <span class="num" style="font-size:24px;font-weight:600">1:47</span>
+      <span style="font-size:11px;text-transform:uppercase;letter-spacing:.14em;color:var(--ink-faint)">Grabando</span>
+      <span style="margin-left:auto;display:flex;gap:8px;align-items:center">
+        <button class="btn sec">Pausar</button>
+        <button class="btn primary">Guardar</button>
+        <button class="btn ghost" aria-label="Descartar">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </span>
+    </div>
+    <p class="cap">recording — el punto late; el cronómetro es tabular</p>
+  </div>
+
+  <div class="panel">
+    <div class="row" style="align-items:flex-start">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="var(--negative)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-top:2px"><path d="m2 2 20 20"/><path d="M18.89 13.23A7.12 7.12 0 0 0 19 12v-2"/><path d="M5 10v2a7 7 0 0 0 12 5"/><path d="M15 9.34V5a3 3 0 0 0-5.68-1.33"/><path d="M9 9v3a3 3 0 0 0 5.12 2.12"/><path d="M12 19v3"/></svg>
+      <div>
+        <p style="margin:0;font-size:14px;font-weight:500">Micrófono bloqueado</p>
+        <p style="margin:2px 0 0;font-size:14px;color:var(--ink-muted)">Habilitalo desde el candado en la barra de direcciones y volvé a intentar.</p>
+        <button class="btn sec" style="margin-top:12px">Reintentar</button>
+      </div>
+    </div>
+    <p class="cap">denied — nunca un error mudo: siempre se dice cómo salir</p>
+  </div>
+</div>
+
+<h2>Grabación guardada</h2>
+<div class="card">
+  <div class="row">
+    <span class="tile">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19v3"/><path d="M19 10v2a7 7 0 0 1-14 0v-2"/><rect x="9" y="2" width="6" height="13" rx="3"/></svg>
+    </span>
+    <div style="flex:1;min-width:0">
+      <p style="margin:0;font-size:14px;font-weight:500">Lectura 1 · <span class="num">3:07</span></p>
+      <p style="margin:2px 0 0;font-size:12px;color:var(--ink-faint)" class="num">21:14 · 640 KB</p>
+    </div>
+    <button class="btn ghost" aria-label="Descargar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 15V3"/><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/></svg>
+    </button>
+    <button class="btn ghost" aria-label="Eliminar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6"/><path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>
+    </button>
+  </div>
+  <div class="bar">reproductor nativo de audio</div>
+</div>
+
+<p class="note">
+  Cada grabación se puede <strong>descargar por separado</strong>, porque el audio es lo único de la
+  app que no entra en el backup JSON.
+</p>
+
+<h2>Reglas de almacenamiento</h2>
+<p class="note">
+  El blob va a <strong>IndexedDB</strong>; en el store quedan sólo los metadatos (id, duración,
+  tamaño, mime). Borrar una grabación limpia <strong>las dos capas</strong>: si se borra sólo el
+  metadato, el archivo queda ocupando disco para siempre sin que nada lo referencie.
+</p>
+<p class="note warn">
+  Si el blob no aparece (por ejemplo tras importar un backup en otro navegador), la fila muestra un
+  aviso explícito en vez de un reproductor roto.
+</p>

@@ -124,6 +124,28 @@ export interface WheelEntry {
   scores: WheelScores
 }
 
+/* ---------------------------------------------------------------- Journal
+   El journal se sigue escribiendo a mano. Acá queda el audio de leerlo, más
+   el registro de qué tareas del día se cumplieron. El blob del audio vive en
+   IndexedDB (ver lib/media.ts); esto son sólo los metadatos. */
+
+export interface JournalRecording {
+  id: ID
+  /** Timestamp ISO en que se terminó de grabar. */
+  createdAt: string
+  durationMs: number
+  mimeType: string
+  /** Bytes, para poder mostrar cuánto ocupa el journal sin abrir cada blob. */
+  size: number
+}
+
+export interface JournalEntry {
+  date: ISODate
+  recordings: JournalRecording[]
+  /** Cuándo se dio el día por cerrado. `null` = todavía abierto. */
+  closedAt: string | null
+}
+
 /* -------------------------------------------------------------- Memento */
 
 export interface Profile {
@@ -145,6 +167,7 @@ export interface AppData {
   rituals: Record<ISODate, RitualEntry>
   tasks: Task[]
   rewards: Record<ISODate, WeekReward>
+  journal: Record<ISODate, JournalEntry>
   dreams: Dream[]
   goals: Goal[]
   lifeAreas: LifeArea[]

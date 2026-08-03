@@ -15,6 +15,7 @@ navegador, sin cuenta ni backend.
 | Panel de hábitos | `/habitos` | Grilla mensual editable, racha por hábito, % de cumplimiento |
 | Ritual Matutino | `/ritual` | Misión del día, pilar, SAPO, proyectos, nivel de energía y logros |
 | Planificador semanal | `/semana` | Tareas por día, navegación entre semanas y premio semanal |
+| Journal | `/journal` | Cierre diario: tareas cumplidas, audio de la lectura y armado de mañana |
 | Objetivos y metas | `/objetivos` | Metas por trimestre y año, colgadas de un sueño |
 | Rueda de la vida | `/rueda` | Radar de áreas configurables (3 a 10) con comparación contra el mes anterior |
 | Estadísticas y rachas | `/estadisticas` | Progreso semanal, mejores rachas y hábitos, evolución 7d vs 7d |
@@ -32,6 +33,19 @@ Son dos cosas distintas y esa distinción es la que sostiene el modelo de datos:
 
 Por eso el selector de sueño en `/objetivos` filtra y, al cargar una meta con un sueño elegido, la
 asocia sola. Sin ese vínculo los dos módulos serían la misma lista con distinto nombre.
+
+### El journal se sigue escribiendo a mano
+
+El módulo **no reemplaza el cuaderno**, lo acompaña. El ciclo diario es:
+
+1. Tildar qué tareas del día se cumplieron (son las mismas del planificador, no hay dos listas).
+2. Escribir el journal a mano, como siempre.
+3. Grabarse leyendo lo escrito. El audio queda asociado a ese día.
+4. Cerrar el día.
+5. Anotar las tareas de mañana desde el mismo panel, y así se encadena.
+
+Por eso no hay campo de texto para el journal: el texto vive en papel. Lo que la app guarda es el
+audio de la lectura y el registro de cumplimiento.
 
 ### Áreas de la rueda
 
@@ -81,6 +95,7 @@ src/
     types.ts      Modelo de dominio. No depende de React ni del storage.
     store.ts      Store de zustand: estado + acciones + selectores.
     storage.ts    Adaptador de persistencia. Único punto de contacto con localStorage.
+    media.ts      Blobs pesados (audio) en IndexedDB. Único punto de contacto con IndexedDB.
     stats.ts      Métricas derivadas (rachas, cumplimiento, evolución, memento).
     date.ts       Helpers de fecha y formateo en es-AR.
     seed.ts       Datos de ejemplo determinísticos, relativos a hoy.
@@ -101,6 +116,14 @@ migrar a Supabase, IndexedDB o lo que sea, se reimplementa ahí y ni el store ni
 enteran.
 
 Los datos **no salen del navegador**. Desde Ajustes se puede exportar un backup JSON e importarlo.
+
+Las grabaciones del journal son la excepción: los blobs de audio van a **IndexedDB**
+(`src/lib/media.ts`), porque localStorage tiene ~5 MB de tope y base64 los infla un 33%. En el
+store quedan sólo los metadatos (id, duración, tamaño, mime).
+
+> ⚠️ **El backup JSON no incluye los audios.** Son binarios y no entran en el export. Cada
+> grabación tiene su botón de descarga individual. Borrar una grabación limpia las dos capas
+> (metadato y blob), y "Empezar de cero" vacía IndexedDB además del store.
 
 ### Datos de ejemplo
 

@@ -11,6 +11,8 @@ import type {
   ID,
   ISODate,
   ISOMonth,
+  JournalEntry,
+  JournalRecording,
   LifeArea,
   Pillar,
   Profile,
@@ -49,6 +51,11 @@ interface Actions {
   setReward: (weekStart: ISODate, text: string) => void
   claimReward: (weekStart: ISODate) => void
 
+  /* Journal */
+  addJournalRecording: (date: ISODate, recording: JournalRecording) => void
+  removeJournalRecording: (date: ISODate, recordingId: ID) => void
+  toggleJournalClosed: (date: ISODate) => void
+
   /* Sueños y objetivos */
   addDream: (scope: Scope, title: string) => void
   updateDream: (id: ID, patch: Partial<Omit<Dream, 'id'>>) => void
@@ -76,6 +83,10 @@ export type Store = AppData & Actions
 /** Un mes sin puntuar arranca en 5 (el medio) para todas las áreas vigentes. */
 function neutralScores(areas: LifeArea[]): Record<ID, number> {
   return Object.fromEntries(areas.map((a) => [a.id, 5]))
+}
+
+function emptyJournalEntry(date: ISODate): JournalEntry {
+  return { date, recordings: [], closedAt: null }
 }
 
 export const useStore = create<Store>()(
@@ -237,6 +248,45 @@ export const useStore = create<Store>()(
           },
         })),
 
+      /* -------------------------------------------------------- Journal */
+      addJournalRecording: (date, recording) =>
+        set((s) => {
+          const entry = s.journal[date] ?? emptyJournalEntry(date)
+          return {
+            journal: {
+              ...s.journal,
+              [date]: { ...entry, recordings: [...entry.recordings, recording] },
+            },
+          }
+        }),
+
+      // El blob se borra aparte, desde la página: el store no hace IO async.
+      removeJournalRecording: (date, recordingId) =>
+        set((s) => {
+          const entry = s.journal[date]
+          if (!entry) return s
+          return {
+            journal: {
+              ...s.journal,
+              [date]: {
+                ...entry,
+                recordings: entry.recordings.filter((r) => r.id !== recordingId),
+              },
+            },
+          }
+        }),
+
+      toggleJournalClosed: (date) =>
+        set((s) => {
+          const entry = s.journal[date] ?? emptyJournalEntry(date)
+          return {
+            journal: {
+              ...s.journal,
+              [date]: { ...entry, closedAt: entry.closedAt ? null : new Date().toISOString() },
+            },
+          }
+        }),
+
       /* ------------------------------------------- Sueños y objetivos */
       addDream: (scope, title) =>
         set((s) => ({
@@ -340,17 +390,21 @@ export const useStore = create<Store>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 2,
+      version: 3,
       storage: createJSONStorage(() => appStorage),
-      // v1 → v2: las áreas de la rueda pasaron a ser datos del usuario y se
-      // eliminó el temporizador de enfoque. Sin esto, quien ya venía usando la
-      // app se queda sin áreas y la rueda revienta.
+      // Sin migración, quien ya venía usando la app se queda sin áreas (la rueda
+      // revienta) o sin la clave del journal.
       migrate: (persisted, version) => {
         const data = persisted as Record<string, unknown>
+        // v1 → v2: áreas de la rueda como datos; se eliminó el temporizador.
         if (version < 2) {
           if (!Array.isArray(data.lifeAreas)) data.lifeAreas = defaultLifeAreas()
           delete data.focusSettings
           delete data.focusSessions
+        }
+        // v2 → v3: aparece el journal.
+        if (version < 3) {
+          if (typeof data.journal !== 'object' || data.journal === null) data.journal = {}
         }
         return data as unknown as AppData
       },
@@ -364,6 +418,7 @@ export const useStore = create<Store>()(
         rituals: s.rituals,
         tasks: s.tasks,
         rewards: s.rewards,
+        journal: s.journal,
         dreams: s.dreams,
         goals: s.goals,
         lifeAreas: s.lifeAreas,
@@ -401,6 +456,7 @@ export function snapshot(s: Store): AppData {
     rituals: s.rituals,
     tasks: s.tasks,
     rewards: s.rewards,
+    journal: s.journal,
     dreams: s.dreams,
     goals: s.goals,
     lifeAreas: s.lifeAreas,

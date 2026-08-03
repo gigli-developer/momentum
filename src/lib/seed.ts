@@ -302,6 +302,8 @@ export function buildSeed(): AppData {
     rewards: {
       [weekStartISO(today)]: { weekStart: weekStartISO(today), text: '', claimed: false },
     },
+    // El journal arranca vacío: las grabaciones son del usuario, no se simulan.
+    journal: {},
     dreams,
     goals,
     lifeAreas: defaultLifeAreas(),
@@ -326,6 +328,7 @@ export function buildEmpty(): AppData {
     rituals: {},
     tasks: [],
     rewards: {},
+    journal: {},
     dreams: [],
     goals: [],
     lifeAreas: defaultLifeAreas(),

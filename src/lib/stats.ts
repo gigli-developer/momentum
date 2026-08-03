@@ -1,5 +1,5 @@
 import { subDays } from 'date-fns'
-import { lastNDays, monthKeyOf, toISO, todayISO, weekDays } from './date'
+import { fromISO, lastNDays, monthKeyOf, toISO, todayISO, weekDays } from './date'
 import type { AppData, Habit, ID, ISODate } from './types'
 
 /* ------------------------------------------------------------------ Rachas */
@@ -11,7 +11,10 @@ import type { AppData, Habit, ID, ISODate } from './types'
 export function currentStreak(days: ISODate[], today: ISODate = todayISO()): number {
   if (days.length === 0) return 0
   const set = new Set(days)
-  let cursor = new Date(today)
+  // fromISO y no `new Date(today)`: `new Date('2026-08-03')` es medianoche UTC,
+  // que al formatear en local cae un día antes en cualquier huso al oeste de
+  // Greenwich. La racha arrancaba desde ayer e ignoraba lo marcado hoy.
+  let cursor = fromISO(today)
   if (!set.has(toISO(cursor))) {
     cursor = subDays(cursor, 1)
     if (!set.has(toISO(cursor))) return 0
@@ -30,8 +33,8 @@ export function bestStreak(days: ISODate[]): number {
   let best = 1
   let run = 1
   for (let i = 1; i < sorted.length; i++) {
-    const prev = new Date(sorted[i - 1])
-    const cur = new Date(sorted[i])
+    const prev = fromISO(sorted[i - 1])
+    const cur = fromISO(sorted[i])
     const gap = Math.round((cur.getTime() - prev.getTime()) / 86_400_000)
     run = gap === 1 ? run + 1 : 1
     if (run > best) best = run
@@ -127,6 +130,9 @@ export function evolution(data: AppData): EvolutionRow[] {
   const tasksDoneIn = (range: Set<string>) =>
     data.tasks.filter((t) => t.done && range.has(t.date)).length
 
+  const journalIn = (range: Set<string>) =>
+    Object.values(data.journal).filter((e) => e.closedAt !== null && range.has(e.date)).length
+
   return [
     {
       label: 'Rituales completados',
@@ -142,6 +148,11 @@ export function evolution(data: AppData): EvolutionRow[] {
       label: 'Tareas completadas',
       value: tasksDoneIn(thisWeek),
       delta: tasksDoneIn(thisWeek) - tasksDoneIn(prevWeek),
+    },
+    {
+      label: 'Días de journal',
+      value: journalIn(thisWeek),
+      delta: journalIn(thisWeek) - journalIn(prevWeek),
     },
     {
       label: 'Objetivos cumplidos (total)',
@@ -178,6 +189,33 @@ export function lifeProgress(birthDate: ISODate, lifeExpectancy: number): LifePr
     pct: Math.min(100, Math.round((weeksLived / weeksTotal) * 100)),
     yearsLived: Math.floor(msLived / (365.25 * 86_400_000)),
   }
+}
+
+/* ------------------------------------------------------------------- Journal */
+
+/** Días con el journal cerrado, del más viejo al más nuevo. */
+export function closedJournalDays(data: AppData): ISODate[] {
+  return Object.values(data.journal)
+    .filter((entry) => entry.closedAt !== null)
+    .map((entry) => entry.date)
+    .sort()
+}
+
+/** Racha de días cerrados seguidos, con la misma tolerancia que los hábitos. */
+export function journalStreak(data: AppData): number {
+  return currentStreak(closedJournalDays(data))
+}
+
+export function journalRecordingCount(data: AppData): number {
+  return Object.values(data.journal).reduce((acc, entry) => acc + entry.recordings.length, 0)
+}
+
+/** Bytes que ocupan todas las grabaciones, según los metadatos. */
+export function journalAudioBytes(data: AppData): number {
+  return Object.values(data.journal).reduce(
+    (acc, entry) => acc + entry.recordings.reduce((sum, r) => sum + r.size, 0),
+    0,
+  )
 }
 
 /* ------------------------------------------------------------------ Rituales */

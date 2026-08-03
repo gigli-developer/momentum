@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useShallow } from 'zustand/react/shallow'
 import { Download, Settings, Trash2, Upload } from 'lucide-react'
 import { PageHeader } from '@/components/layout/AppShell'
@@ -7,6 +7,8 @@ import { Button, IconButton } from '@/components/ui/Button'
 import { InlineAdd, Input, Label, Textarea } from '@/components/ui/Input'
 import { Modal } from '@/components/ui/Modal'
 import { downloadBackup } from '@/lib/storage'
+import { clearBlobs, estimateUsage, formatBytes, type StorageUsage } from '@/lib/media'
+import { journalAudioBytes, journalRecordingCount } from '@/lib/stats'
 import { snapshot, useStore } from '@/lib/store'
 import type { AppData } from '@/lib/types'
 
@@ -27,7 +29,15 @@ export function SettingsPage() {
 
   const [confirm, setConfirm] = useState<'seed' | 'empty' | null>(null)
   const [importError, setImportError] = useState<string | null>(null)
+  const [usage, setUsage] = useState<StorageUsage | null>(null)
   const fileInput = useRef<HTMLInputElement>(null)
+
+  const audioBytes = useMemo(() => journalAudioBytes(data), [data])
+  const recordingCount = useMemo(() => journalRecordingCount(data), [data])
+
+  useEffect(() => {
+    void estimateUsage().then(setUsage)
+  }, [data])
 
   async function onImport(file: File) {
     setImportError(null)
@@ -160,9 +170,27 @@ export function SettingsPage() {
         <Card>
           <SectionTitle>Tus datos</SectionTitle>
           <p className="mt-1 text-xs text-ink-faint">
-            Todo vive en el localStorage de este navegador. Si lo borrás, se van los datos —
-            descargá un backup cada tanto.
+            Todo vive en este navegador. Si lo borrás, se van los datos — descargá un backup cada
+            tanto.
           </p>
+
+          <Panel className="mt-4">
+            <SectionTitle>Grabaciones del journal</SectionTitle>
+            <p className="mt-1.5 text-sm text-ink">
+              {recordingCount} {recordingCount === 1 ? 'lectura' : 'lecturas'} ·{' '}
+              {formatBytes(audioBytes)}
+            </p>
+            {usage ? (
+              <p className="mt-1 text-xs text-ink-faint">
+                El navegador tiene {formatBytes(usage.usage)} usados de{' '}
+                {formatBytes(usage.quota)} disponibles.
+              </p>
+            ) : null}
+            <p className="mt-2 text-xs text-negative">
+              El backup JSON no incluye los audios: son archivos binarios y no entran. Descargalos
+              uno por uno desde cada día del journal si querés conservarlos.
+            </p>
+          </Panel>
 
           <div className="mt-4 flex flex-wrap gap-2">
             <Button
@@ -224,6 +252,9 @@ export function SettingsPage() {
             <Button
               variant={confirm === 'empty' ? 'danger' : 'primary'}
               onClick={() => {
+                // Los audios viven fuera del store: hay que limpiarlos aparte o
+                // quedan ocupando disco sin que nada los referencie.
+                void clearBlobs().catch(() => {})
                 if (confirm === 'seed') resetToSeed()
                 else resetToEmpty()
                 setConfirm(null)
@@ -238,6 +269,13 @@ export function SettingsPage() {
           Esto reemplaza <strong className="text-ink">todos</strong> tus datos actuales y no se
           puede deshacer. Si querés conservarlos, exportá un backup antes.
         </p>
+        {recordingCount > 0 ? (
+          <p className="mt-3 text-sm text-negative">
+            También se borran las {recordingCount}{' '}
+            {recordingCount === 1 ? 'grabación' : 'grabaciones'} del journal, y esas no están en el
+            backup.
+          </p>
+        ) : null}
       </Modal>
     </>
   )

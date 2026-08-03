@@ -9,6 +9,7 @@ import { catColor } from '@/lib/cn'
 import {
   evolution,
   habitStats,
+  journalStreak,
   ritualsCompletedThisMonth,
   weeklyHabitProgress,
 } from '@/lib/stats'
@@ -33,6 +34,7 @@ export function StatsPage() {
   const bestHabits = useMemo(() => [...stats].sort((a, b) => b.rate - a.rate).slice(0, 5), [stats])
 
   const ritualsThisMonth = ritualsCompletedThisMonth(data)
+  const journalRacha = useMemo(() => journalStreak(data), [data])
 
   if (data.habits.length === 0) {
     return (
@@ -71,10 +73,14 @@ export function StatsPage() {
           </p>
           <ProgressBar className="mt-3" value={weekly.pct} />
 
-          <div className="mt-5 grid grid-cols-2 gap-3">
+          <div className="mt-5 grid grid-cols-3 gap-3">
             <Panel>
               <SectionTitle>Rituales del mes</SectionTitle>
               <p className="mt-1 text-xl font-semibold tabular-nums">{ritualsThisMonth}</p>
+            </Panel>
+            <Panel>
+              <SectionTitle>Racha journal</SectionTitle>
+              <p className="mt-1 text-xl font-semibold tabular-nums">{journalRacha}</p>
             </Panel>
             <Panel>
               <SectionTitle>Hábitos activos</SectionTitle>
