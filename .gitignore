@@ -10,6 +10,12 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+
+# Credenciales de Supabase
+.env
+.env.local
+.env.*.local
+supabase/.temp
 *.local
 
 # Editor directories and files

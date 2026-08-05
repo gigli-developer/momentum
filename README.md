@@ -114,6 +114,7 @@ src/
     <modulo>/     Una carpeta por módulo, con su página y sus piezas propias.
     registry.tsx  Definición de los módulos: ruta, título, descripción e ícono.
 design-system/    Previews HTML del design system, sincronizadas con Claude Design.
+supabase/         Migraciones SQL del esquema. Ver supabase/README.md.
 ```
 
 ### Persistencia
