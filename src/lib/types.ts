@@ -6,7 +6,6 @@ export type ISODate = string
 /** Mes en formato `YYYY-MM`. */
 export type ISOMonth = string
 
-export type Scope = 'personal' | 'professional'
 
 /* ---------------------------------------------------------------- Hábitos */
 
@@ -62,7 +61,13 @@ export interface Task {
   id: ID
   date: ISODate
   title: string
+  /** Línea secundaria opcional, debajo del título. */
+  note: string
   done: boolean
+  /** Marcada como importante. */
+  starred: boolean
+  /** Tarea padre. Un solo nivel de anidamiento: una subtarea no tiene hijas. */
+  parentId: ID | null
   order: number
 }
 
@@ -73,26 +78,24 @@ export interface WeekReward {
   claimed: boolean
 }
 
-/* ------------------------------------------------- Sueños y objetivos
-   Un SUEÑO es un destino sin fecha. Un OBJETIVO es un compromiso con año y
-   trimestre que te acerca a un sueño. Por eso `Goal.dreamId` — es lo que
-   evita que ambos módulos sean la misma lista con distinto nombre. */
+/* -------------------------------------------------------------- Objetivos
+   Las secciones las define el usuario. Arranca con Personal y Profesional,
+   pero puede crear las que quiera (Salud, Finanzas, Estudio…). */
 
-export interface Dream {
+export interface GoalCategory {
   id: ID
-  scope: Scope
-  title: string
-  achieved: boolean
-  createdAt: ISODate
+  label: string
+  order: number
 }
+
+/** Siempre tiene que quedar al menos una sección donde colgar objetivos. */
+export const MIN_GOAL_CATEGORIES = 1
 
 export type Quarter = 1 | 2 | 3 | 4
 
 export interface Goal {
   id: ID
-  scope: Scope
-  /** Sueño del que cuelga este objetivo. `null` = objetivo suelto. */
-  dreamId: ID | null
+  categoryId: ID
   title: string
   year: number
   quarter: Quarter
@@ -168,7 +171,7 @@ export interface AppData {
   tasks: Task[]
   rewards: Record<ISODate, WeekReward>
   journal: Record<ISODate, JournalEntry>
-  dreams: Dream[]
+  goalCategories: GoalCategory[]
   goals: Goal[]
   lifeAreas: LifeArea[]
   wheel: Record<ISOMonth, WheelEntry>

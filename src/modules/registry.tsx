@@ -6,7 +6,6 @@ import {
   NotebookPen,
   PieChart,
   Settings,
-  Star,
   Sun,
   Target,
 } from 'lucide-react'
@@ -78,13 +77,6 @@ export const MODULES: ModuleDef[] = [
     title: 'Memento Mori',
     description: 'Recordá lo que realmente importa y viví con propósito.',
     Icon: Hourglass,
-  },
-  {
-    id: 'suenos',
-    path: '/suenos',
-    title: 'Sueños por cumplir',
-    description: 'Guardá tus sueños personales y profesionales y hacelos realidad.',
-    Icon: Star,
   },
   {
     id: 'ajustes',

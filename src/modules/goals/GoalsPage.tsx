@@ -1,14 +1,15 @@
-import { useMemo, useState } from 'react'
-import { Briefcase, ChevronLeft, ChevronRight, Target, Trash2, User } from 'lucide-react'
+import { useEffect, useMemo, useState } from 'react'
+import { ChevronLeft, ChevronRight, Pencil, Target, Trash2, X } from 'lucide-react'
 import { PageHeader } from '@/components/layout/AppShell'
 import { Card, Panel, SectionTitle } from '@/components/ui/Card'
-import { IconButton } from '@/components/ui/Button'
+import { Button, IconButton } from '@/components/ui/Button'
 import { Checkbox } from '@/components/ui/Checkbox'
-import { InlineAdd, Select } from '@/components/ui/Input'
+import { InlineAdd, Input } from '@/components/ui/Input'
+import { Modal } from '@/components/ui/Modal'
 import { Donut } from '@/components/ui/Progress'
-import { Tabs } from '@/components/ui/Tabs'
+import { cn } from '@/lib/cn'
 import { useStore } from '@/lib/store'
-import type { Quarter, Scope } from '@/lib/types'
+import { MIN_GOAL_CATEGORIES, type ID, type Quarter } from '@/lib/types'
 
 const QUARTERS: Quarter[] = [1, 2, 3, 4]
 const QUARTER_LABEL: Record<Quarter, string> = {
@@ -19,72 +20,110 @@ const QUARTER_LABEL: Record<Quarter, string> = {
 }
 
 export function GoalsPage() {
-  const [scope, setScope] = useState<Scope>('professional')
   const [year, setYear] = useState(() => new Date().getFullYear())
-  const [dreamFilter, setDreamFilter] = useState<string>('all')
+  const [managing, setManaging] = useState(false)
+  const [pendingDelete, setPendingDelete] = useState<ID | null>(null)
 
+  const categories = useStore((s) => s.goalCategories)
   const goals = useStore((s) => s.goals)
-  const dreams = useStore((s) => s.dreams)
+  const addGoalCategory = useStore((s) => s.addGoalCategory)
+  const renameGoalCategory = useStore((s) => s.renameGoalCategory)
+  const removeGoalCategory = useStore((s) => s.removeGoalCategory)
   const addGoal = useStore((s) => s.addGoal)
   const toggleGoal = useStore((s) => s.toggleGoal)
   const removeGoal = useStore((s) => s.removeGoal)
 
-  const scopeDreams = useMemo(() => dreams.filter((d) => d.scope === scope), [dreams, scope])
+  const [activeId, setActiveId] = useState<ID | null>(null)
+  // Si la sección activa se borra o todavía no se eligió, cae en la primera.
+  const active = categories.find((c) => c.id === activeId) ?? categories[0]
+
+  useEffect(() => {
+    if (active && active.id !== activeId) setActiveId(active.id)
+  }, [active, activeId])
 
   const visible = useMemo(
-    () =>
-      goals.filter(
-        (g) =>
-          g.scope === scope &&
-          g.year === year &&
-          (dreamFilter === 'all' ||
-            (dreamFilter === 'none' ? g.dreamId === null : g.dreamId === dreamFilter)),
-      ),
-    [goals, scope, year, dreamFilter],
+    () => goals.filter((g) => g.categoryId === active?.id && g.year === year),
+    [goals, active, year],
   )
 
   const completed = visible.filter((g) => g.done).length
   const remaining = visible.length - completed
+  const toDelete = categories.find((c) => c.id === pendingDelete)
+  const toDeleteGoals = goals.filter((g) => g.categoryId === pendingDelete).length
 
   return (
     <>
       <PageHeader
         icon={<Target className="size-5" />}
         title="Objetivos y metas"
-        description="Un objetivo es un compromiso con fecha que te acerca a un sueño."
+        description="Un objetivo es un compromiso con año y trimestre. Las secciones las armás vos."
       />
 
       <div className="mb-5 flex flex-wrap items-center gap-3">
-        <Tabs
-          value={scope}
-          onChange={(v) => {
-            setScope(v)
-            setDreamFilter('all')
-          }}
-          items={[
-            { value: 'personal', label: 'Personal', icon: <User className="size-3.5" /> },
-            {
-              value: 'professional',
-              label: 'Profesional',
-              icon: <Briefcase className="size-3.5" />,
-            },
-          ]}
-        />
+        {/* ------------------------------------------------------ Secciones */}
+        <div className="flex flex-wrap items-center gap-1 rounded-tile border border-line bg-surface-2 p-1">
+          {categories.map((category) => {
+            const isActive = category.id === active?.id
+            return (
+              <div key={category.id} className="flex items-center">
+                {managing ? (
+                  <div className="flex items-center gap-0.5 rounded-[8px] bg-surface-3 px-1 py-0.5">
+                    <Input
+                      value={category.label}
+                      onChange={(e) => renameGoalCategory(category.id, e.target.value)}
+                      onBlur={(e) => {
+                        if (!e.target.value.trim()) renameGoalCategory(category.id, 'Sin nombre')
+                      }}
+                      aria-label={`Nombre de la sección ${category.label}`}
+                      className="w-32 border-transparent bg-transparent px-1.5 py-0.5 text-sm"
+                    />
+                    <IconButton
+                      label={`Eliminar sección ${category.label}`}
+                      disabled={categories.length <= MIN_GOAL_CATEGORIES}
+                      title={
+                        categories.length <= MIN_GOAL_CATEGORIES
+                          ? 'Tiene que quedar al menos una sección'
+                          : `Eliminar ${category.label}`
+                      }
+                      className="size-6"
+                      onClick={() => setPendingDelete(category.id)}
+                    >
+                      <Trash2 className="size-3.5" />
+                    </IconButton>
+                  </div>
+                ) : (
+                  <button
+                    type="button"
+                    onClick={() => setActiveId(category.id)}
+                    aria-pressed={isActive}
+                    className={cn(
+                      'rounded-[8px] px-3 py-1.5 text-sm transition-colors',
+                      isActive
+                        ? 'bg-accent font-semibold text-accent-ink'
+                        : 'text-ink-muted hover:bg-surface-3 hover:text-ink',
+                    )}
+                  >
+                    {category.label}
+                  </button>
+                )}
+              </div>
+            )
+          })}
 
-        <Select
-          className="w-auto min-w-56"
-          value={dreamFilter}
-          onChange={(e) => setDreamFilter(e.target.value)}
-          aria-label="Filtrar por sueño"
-        >
-          <option value="all">Todos los objetivos</option>
-          {scopeDreams.map((d) => (
-            <option key={d.id} value={d.id}>
-              ⭐ {d.title}
-            </option>
-          ))}
-          <option value="none">Sin sueño asociado</option>
-        </Select>
+          {managing ? (
+            <div className="flex items-center gap-1 pl-1">
+              <InlineAdd placeholder="Nueva sección" onAdd={addGoalCategory} className="w-52" />
+            </div>
+          ) : null}
+
+          <IconButton
+            label={managing ? 'Terminar de editar secciones' : 'Editar secciones'}
+            className="ml-1 size-8"
+            onClick={() => setManaging((v) => !v)}
+          >
+            {managing ? <X className="size-4" /> : <Pencil className="size-3.5" />}
+          </IconButton>
+        </div>
 
         <div className="ml-auto flex items-center gap-1">
           <IconButton label="Año anterior" onClick={() => setYear((y) => y - 1)}>
@@ -97,46 +136,54 @@ export function GoalsPage() {
         </div>
       </div>
 
-      <Card className="mb-4">
-        <SectionTitle>Resumen del año</SectionTitle>
-        <div className="mt-3 flex items-center gap-5">
-          <Donut progress={visible.length === 0 ? 0 : completed / visible.length} size={64} />
-          <dl className="grid flex-1 gap-1 text-sm">
-            <div className="flex justify-between border-b border-line pb-1">
-              <dt className="text-ink-muted">Completados</dt>
-              <dd className="font-semibold tabular-nums">{completed}</dd>
+      {!active ? (
+        <Card>
+          <p className="text-sm text-ink-muted">
+            No hay ninguna sección. Creá una para empezar a cargar objetivos.
+          </p>
+          <InlineAdd className="mt-3 max-w-sm" placeholder="Ej: Salud" onAdd={addGoalCategory} />
+        </Card>
+      ) : (
+        <>
+          <Card className="mb-4">
+            <SectionTitle>
+              {active.label} · {year}
+            </SectionTitle>
+            <div className="mt-3 flex items-center gap-5">
+              <Donut progress={visible.length === 0 ? 0 : completed / visible.length} size={64} />
+              <dl className="grid flex-1 gap-1 text-sm">
+                <div className="flex justify-between border-b border-line pb-1">
+                  <dt className="text-ink-muted">Completados</dt>
+                  <dd className="font-semibold tabular-nums">{completed}</dd>
+                </div>
+                <div className="flex justify-between pt-1">
+                  <dt className="text-ink-muted">Restantes</dt>
+                  <dd className="font-semibold tabular-nums">{remaining}</dd>
+                </div>
+              </dl>
             </div>
-            <div className="flex justify-between pt-1">
-              <dt className="text-ink-muted">Restantes</dt>
-              <dd className="font-semibold tabular-nums">{remaining}</dd>
-            </div>
-          </dl>
-        </div>
-      </Card>
+          </Card>
 
-      <div className="grid gap-4 md:grid-cols-2">
-        {QUARTERS.map((quarter) => {
-          const quarterGoals = visible.filter((g) => g.quarter === quarter)
-          const quarterDone = quarterGoals.filter((g) => g.done).length
+          <div className="grid gap-4 md:grid-cols-2">
+            {QUARTERS.map((quarter) => {
+              const quarterGoals = visible.filter((g) => g.quarter === quarter)
+              const quarterDone = quarterGoals.filter((g) => g.done).length
 
-          return (
-            <Card key={quarter} className="flex flex-col p-4">
-              <div className="mb-3 flex items-baseline justify-between">
-                <h2 className="text-sm font-semibold">{QUARTER_LABEL[quarter]}</h2>
-                <span className="text-xs text-ink-faint tabular-nums">
-                  {quarterDone}/{quarterGoals.length}
-                </span>
-              </div>
+              return (
+                <Card key={quarter} className="flex flex-col p-4">
+                  <div className="mb-3 flex items-baseline justify-between">
+                    <h2 className="text-sm font-semibold">{QUARTER_LABEL[quarter]}</h2>
+                    <span className="text-xs text-ink-faint tabular-nums">
+                      {quarterDone}/{quarterGoals.length}
+                    </span>
+                  </div>
 
-              {quarterGoals.length === 0 ? (
-                <p className="mb-3 text-sm text-ink-faint">Sin objetivos todavía.</p>
-              ) : (
-                <ul className="mb-3 flex flex-col gap-2">
-                  {quarterGoals.map((goal) => {
-                    const dream = dreams.find((d) => d.id === goal.dreamId)
-                    return (
-                      <li key={goal.id} className="group">
-                        <div className="flex items-start gap-2">
+                  {quarterGoals.length === 0 ? (
+                    <p className="mb-3 text-sm text-ink-faint">Sin objetivos todavía.</p>
+                  ) : (
+                    <ul className="mb-3 flex flex-col gap-2">
+                      {quarterGoals.map((goal) => (
+                        <li key={goal.id} className="group flex items-start gap-2">
                           <Checkbox
                             className="min-w-0 flex-1 items-start"
                             checked={goal.done}
@@ -150,45 +197,57 @@ export function GoalsPage() {
                           >
                             <Trash2 className="size-3.5" />
                           </IconButton>
-                        </div>
-                        {dream ? (
-                          <p className="ml-7 mt-0.5 truncate text-[11px] text-ink-faint">
-                            ⭐ {dream.title}
-                          </p>
-                        ) : null}
-                      </li>
-                    )
-                  })}
-                </ul>
-              )}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
 
-              <InlineAdd
-                className="mt-auto"
-                placeholder="Nueva meta"
-                onAdd={(title) =>
-                  addGoal({
-                    scope,
-                    title,
-                    year,
-                    quarter,
-                    dreamId:
-                      dreamFilter === 'all' || dreamFilter === 'none' ? null : dreamFilter,
-                  })
-                }
-              />
-            </Card>
-          )
-        })}
-      </div>
+                  <InlineAdd
+                    className="mt-auto"
+                    placeholder="Nueva meta"
+                    onAdd={(title) =>
+                      addGoal({ categoryId: active.id, title, year, quarter })
+                    }
+                  />
+                </Card>
+              )
+            })}
+          </div>
 
-      {scopeDreams.length > 0 ? (
-        <Panel className="mt-4">
-          <p className="text-xs text-ink-muted">
-            Elegí un sueño en el filtro de arriba y las metas que cargues van a quedar colgadas de
-            ese sueño automáticamente.
-          </p>
-        </Panel>
-      ) : null}
+          <Panel className="mt-4">
+            <p className="text-xs text-ink-muted">
+              Las metas se cargan en la sección activa ({active.label}). Con el lápiz de arriba
+              podés renombrar, agregar o borrar secciones.
+            </p>
+          </Panel>
+        </>
+      )}
+
+      <Modal
+        open={pendingDelete !== null}
+        onClose={() => setPendingDelete(null)}
+        title={`Eliminar “${toDelete?.label ?? ''}”`}
+        footer={
+          <>
+            <Button onClick={() => setPendingDelete(null)}>Cancelar</Button>
+            <Button
+              variant="danger"
+              onClick={() => {
+                if (pendingDelete) removeGoalCategory(pendingDelete)
+                setPendingDelete(null)
+              }}
+            >
+              Sí, eliminar
+            </Button>
+          </>
+        }
+      >
+        <p className="text-sm text-ink-muted">
+          {toDeleteGoals === 0
+            ? 'La sección está vacía, no se pierde ningún objetivo.'
+            : `Se van a borrar también ${toDeleteGoals} ${toDeleteGoals === 1 ? 'objetivo' : 'objetivos'} de todos los años. No se puede deshacer.`}
+        </p>
+      </Modal>
     </>
   )
 }

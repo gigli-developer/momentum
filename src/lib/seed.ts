@@ -1,6 +1,17 @@
 import { addDays, differenceInCalendarDays, subDays, subMonths } from 'date-fns'
 import { monthKey, toISO, todayISO, weekStart, weekStartISO } from './date'
-import type { AppData, Goal, Habit, LifeArea, Task, WheelScores } from './types'
+import type { AppData, Goal, GoalCategory, Habit, LifeArea, Task, WheelScores } from './types'
+
+/**
+ * Secciones por defecto de Objetivos. El usuario puede renombrarlas, borrarlas
+ * o sumar las suyas; estos ids son los valores que traía el campo `scope`.
+ */
+export function defaultGoalCategories(): GoalCategory[] {
+  return [
+    { id: 'personal', label: 'Personal', order: 0 },
+    { id: 'professional', label: 'Profesional', order: 1 },
+  ]
+}
 
 /**
  * Áreas por defecto de la rueda. El usuario las puede renombrar, borrar o sumar
@@ -42,31 +53,42 @@ const HABIT_SEEDS: Array<Pick<Habit, 'name' | 'emoji' | 'colorIndex'> & { rate: 
   { name: 'Beber agua', emoji: '💧', colorIndex: 7, rate: 0.66 },
 ]
 
-const TASK_GROUPS: Array<{ titles: string[]; doneIdx: number[] }> = [
-  {
-    titles: [
-      'Lanzar landing',
-      'Cenar con Fede',
-      'Almorzar algo rico y nutritivo',
-      'Ver el atardecer',
-      'Ir a entrenar',
-      'Llamar a mi familia',
-      'Salir a caminar',
-    ],
-    doneIdx: [2, 4],
-  },
-  {
-    titles: [
-      'Sesión con Fede',
-      'Sesión con Julieta',
-      'Cena con Mar',
-      'Armar sistema para Sofi (abogada)',
-      'Ir al mar a la mañana',
-      'Cortarme el pelo',
-    ],
-    doneIdx: [],
-  },
-  { titles: ['Revisar métricas de la semana', 'Comprar regalo'], doneIdx: [] },
+interface SeedTask {
+  title: string
+  note?: string
+  done?: boolean
+  starred?: boolean
+  subtasks?: Array<{ title: string; done?: boolean; starred?: boolean }>
+}
+
+const TASK_GROUPS: SeedTask[][] = [
+  [
+    {
+      title: 'Automatización ZAR',
+      subtasks: [
+        { title: 'Probar 5 statements viejos para corroborar fiabilidad', starred: true },
+        { title: 'Cruce con intraday Encore' },
+      ],
+    },
+    { title: 'Indagar reemplazo alteryx EDO (si existe)', starred: true },
+    { title: 'Coordinar Personal Days', note: 'Uno tengo que guardarlo para el turno de moto' },
+    { title: 'Almorzar algo rico y nutritivo', done: true },
+    { title: 'Ir a entrenar', done: true },
+    { title: 'Ver el atardecer' },
+  ],
+  [
+    { title: 'Sesión con Fede' },
+    { title: 'Cena con Mar' },
+    {
+      title: 'Alteryx Books - All Regions',
+      subtasks: [{ title: 'Limpiar/Definir Related Masters y LE' }],
+    },
+    { title: 'Cortarme el pelo' },
+  ],
+  [
+    { title: 'Automatizar reconciliación de Brasil' },
+    { title: 'Revisar métricas de la semana' },
+  ],
 ]
 
 const THIS_MONTH: WheelScores = {
@@ -170,54 +192,38 @@ export function buildSeed(): AppData {
     const offset =
       todayOffset + g <= 6 ? todayOffset + g : Math.max(0, todayOffset - (g - (6 - todayOffset)))
     const date = toISO(addDays(monday, offset))
-    group.titles.forEach((title, idx) => {
+    group.forEach((seedTask, idx) => {
+      const parentId = `task-${g}-${idx}`
       tasks.push({
-        id: `task-${g}-${idx}`,
+        id: parentId,
         date,
-        title,
-        done: group.doneIdx.includes(idx),
+        title: seedTask.title,
+        note: seedTask.note ?? '',
+        done: seedTask.done ?? false,
+        starred: seedTask.starred ?? false,
+        parentId: null,
         order: idx,
+      })
+      seedTask.subtasks?.forEach((sub, subIdx) => {
+        tasks.push({
+          id: `${parentId}-${subIdx}`,
+          date,
+          title: sub.title,
+          note: '',
+          done: sub.done ?? false,
+          starred: sub.starred ?? false,
+          parentId,
+          order: subIdx,
+        })
       })
     })
   })
-
-  const dreams = [
-    {
-      id: 'dream-referente',
-      scope: 'professional' as const,
-      title: 'Ser referente en mi profesión',
-      achieved: false,
-      createdAt: now,
-    },
-    {
-      id: 'dream-nomade',
-      scope: 'professional' as const,
-      title: 'Vivir viajando mientras trabajo desde donde quiero',
-      achieved: false,
-      createdAt: now,
-    },
-    {
-      id: 'dream-mar',
-      scope: 'personal' as const,
-      title: 'Vivir en una casa frente al mar',
-      achieved: false,
-      createdAt: now,
-    },
-    {
-      id: 'dream-maraton',
-      scope: 'personal' as const,
-      title: 'Correr una maratón entera',
-      achieved: false,
-      createdAt: now,
-    },
-  ]
 
   const year = today.getFullYear()
   const goals: Goal[] = [
     {
       id: 'goal-1',
-      scope: 'professional',
-      dreamId: 'dream-nomade',
+      categoryId: 'professional',
       title: 'Soltar los clientes de Diseño Web que me drenaban',
       year,
       quarter: 1,
@@ -226,8 +232,7 @@ export function buildSeed(): AppData {
     },
     {
       id: 'goal-2',
-      scope: 'professional',
-      dreamId: 'dream-referente',
+      categoryId: 'professional',
       title: 'Certificarme como Coach de Alto Rendimiento',
       year,
       quarter: 2,
@@ -236,8 +241,7 @@ export function buildSeed(): AppData {
     },
     {
       id: 'goal-3',
-      scope: 'professional',
-      dreamId: 'dream-referente',
+      categoryId: 'professional',
       title: 'Publicar 20 ensayos sobre productividad',
       year,
       quarter: 3,
@@ -246,8 +250,7 @@ export function buildSeed(): AppData {
     },
     {
       id: 'goal-4',
-      scope: 'professional',
-      dreamId: 'dream-nomade',
+      categoryId: 'professional',
       title: 'Cerrar el año con 6 meses de runway',
       year,
       quarter: 4,
@@ -256,8 +259,7 @@ export function buildSeed(): AppData {
     },
     {
       id: 'goal-5',
-      scope: 'personal',
-      dreamId: 'dream-maraton',
+      categoryId: 'personal',
       title: 'Correr mis primeros 21k',
       year,
       quarter: 3,
@@ -266,8 +268,7 @@ export function buildSeed(): AppData {
     },
     {
       id: 'goal-6',
-      scope: 'personal',
-      dreamId: 'dream-mar',
+      categoryId: 'personal',
       title: 'Pasar un mes entero viviendo en la costa',
       year,
       quarter: 1,
@@ -304,7 +305,7 @@ export function buildSeed(): AppData {
     },
     // El journal arranca vacío: las grabaciones son del usuario, no se simulan.
     journal: {},
-    dreams,
+    goalCategories: defaultGoalCategories(),
     goals,
     lifeAreas: defaultLifeAreas(),
     wheel: {
@@ -329,7 +330,7 @@ export function buildEmpty(): AppData {
     tasks: [],
     rewards: {},
     journal: {},
-    dreams: [],
+    goalCategories: defaultGoalCategories(),
     goals: [],
     lifeAreas: defaultLifeAreas(),
     wheel: {},

@@ -9,7 +9,6 @@ import { GoalsPage } from '@/modules/goals/GoalsPage'
 import { WheelPage } from '@/modules/wheel/WheelPage'
 import { StatsPage } from '@/modules/stats/StatsPage'
 import { MementoPage } from '@/modules/memento/MementoPage'
-import { DreamsPage } from '@/modules/dreams/DreamsPage'
 import { SettingsPage } from '@/modules/settings/SettingsPage'
 
 export default function App() {
@@ -25,7 +24,6 @@ export default function App() {
         <Route path="/rueda" element={<WheelPage />} />
         <Route path="/estadisticas" element={<StatsPage />} />
         <Route path="/memento" element={<MementoPage />} />
-        <Route path="/suenos" element={<DreamsPage />} />
         <Route path="/ajustes" element={<SettingsPage />} />
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>

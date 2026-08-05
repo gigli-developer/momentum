@@ -66,8 +66,8 @@ export function DashboardPage() {
   const topStreaks = [...stats].sort((a, b) => b.streak - a.streak).slice(0, 3)
   const journalToday = data.journal[today]
   const journalRacha = useMemo(() => journalStreak(data), [data])
-  const dreamsPending = data.dreams.filter((d) => !d.achieved)
   const reward = data.rewards[weekStartISO()]
+  const activeCategory = data.goalCategories[0]
 
   const previews: Record<string, React.ReactNode> = {
     /* ------------------------------------------------------------ Hábitos */
@@ -216,7 +216,11 @@ export function DashboardPage() {
     objetivos: (
       <PreviewShell>
         <div className="flex items-baseline justify-between">
-          <Muted>Año {year}</Muted>
+          <Muted>
+            {data.goalCategories.length > 1
+              ? `${data.goalCategories.length} secciones · ${year}`
+              : `${activeCategory?.label ?? 'Sin secciones'} · ${year}`}
+          </Muted>
           <span className="text-xs text-ink-faint tabular-nums">
             {goalsDone}/{yearGoals.length}
           </span>
@@ -319,26 +323,6 @@ export function DashboardPage() {
       </PreviewShell>
     ),
 
-    /* --------------------------------------------------------------- Sueños */
-    suenos: (
-      <PreviewShell>
-        {dreamsPending.length === 0 ? (
-          <Muted>Sin sueños pendientes.</Muted>
-        ) : (
-          <ul className="flex flex-col gap-1.5">
-            {dreamsPending.slice(0, 3).map((dream) => (
-              <li key={dream.id} className="flex items-center gap-2 text-xs">
-                <span aria-hidden>⭐</span>
-                <span className="min-w-0 flex-1 truncate text-ink-muted">{dream.title}</span>
-              </li>
-            ))}
-          </ul>
-        )}
-        <p className="mt-3 text-xs text-ink-faint">
-          {data.dreams.filter((d) => d.achieved).length}/{data.dreams.length} cumplidos
-        </p>
-      </PreviewShell>
-    ),
   }
 
   return (

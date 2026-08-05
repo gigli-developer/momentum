@@ -14,25 +14,33 @@ navegador, sin cuenta ni backend.
 | --- | --- | --- |
 | Panel de hábitos | `/habitos` | Grilla mensual editable, racha por hábito, % de cumplimiento |
 | Ritual Matutino | `/ritual` | Misión del día, pilar, SAPO, proyectos, nivel de energía y logros |
-| Planificador semanal | `/semana` | Tareas por día, navegación entre semanas y premio semanal |
+| Planificador semanal | `/semana` | Tablero de columnas por día, estilo Google Tasks |
 | Journal | `/journal` | Cierre diario: tareas cumplidas, audio de la lectura y armado de mañana |
-| Objetivos y metas | `/objetivos` | Metas por trimestre y año, colgadas de un sueño |
+| Objetivos y metas | `/objetivos` | Metas por trimestre y año, en secciones que define el usuario |
 | Rueda de la vida | `/rueda` | Radar de áreas configurables (3 a 10) con comparación contra el mes anterior |
 | Estadísticas y rachas | `/estadisticas` | Progreso semanal, mejores rachas y hábitos, evolución 7d vs 7d |
 | Memento Mori | `/memento` | Semanas vividas sobre el total y calendario de vida completo |
-| Sueños por cumplir | `/suenos` | Sueños personales y profesionales, con avance de sus objetivos |
 | Ajustes | `/ajustes` | Perfil, pilares, proyectos, export/import y reset |
 
-### Sueños vs. objetivos
+### Tareas
 
-Son dos cosas distintas y esa distinción es la que sostiene el modelo de datos:
+Hay **una sola lista de tareas** para toda la app (`AppData.tasks`, indexadas por fecha). El
+planificador es el tablero semanal y el journal es la vista diaria de esa misma lista: lo que
+tildás en uno aparece tildado en el otro.
 
-- Un **sueño** es un destino sin fecha (`Dream`).
-- Un **objetivo** es un compromiso con año y trimestre (`Goal`) que **cuelga de un sueño**
-  vía `Goal.dreamId`.
+Cada tarea admite una nota (línea secundaria), una estrella de importante y **un nivel** de
+subtareas (`parentId`). Reglas:
 
-Por eso el selector de sueño en `/objetivos` filtra y, al cargar una meta con un sueño elegido, la
-asocia sola. Sin ese vínculo los dos módulos serían la misma lista con distinto nombre.
+- Completar una tarea padre completa sus subtareas.
+- Borrar una tarea padre borra sus subtareas.
+- Una tarea pasa a "Completadas" cuando el **padre** está hecho, y arrastra sus subtareas.
+
+### Secciones de objetivos
+
+Las secciones **no están fijas en el código**: son datos del usuario (`AppData.goalCategories`) y
+se agregan, renombran y eliminan desde el propio módulo. Arranca con Personal y Profesional.
+Siempre tiene que quedar al menos una, y borrar una sección **borra sus objetivos de todos los
+años** — la UI lo confirma mostrando cuántos.
 
 ### El journal se sigue escribiendo a mano
 
@@ -154,6 +162,9 @@ Decisiones que se apartan a propósito del mockup original:
 ## Estado actual y qué sigue
 
 Los ocho módulos están implementados y funcionan sobre datos reales y persistentes.
+
+`src/components/tasks/` contiene `TaskRow` y `DayTaskList`, el par que comparten el planificador y
+el journal para no duplicar la lógica de tareas.
 
 Pendiente:
 

@@ -11,14 +11,12 @@ import {
   Pause,
   Play,
   Sunrise,
-  Trash2,
   X,
 } from 'lucide-react'
 import { PageHeader } from '@/components/layout/AppShell'
 import { Card, Panel, SectionTitle } from '@/components/ui/Card'
 import { Button, IconButton } from '@/components/ui/Button'
-import { Checkbox } from '@/components/ui/Checkbox'
-import { InlineAdd } from '@/components/ui/Input'
+import { DayTaskList } from '@/components/tasks/DayTaskList'
 import { ProgressBar } from '@/components/ui/Progress'
 import { cn } from '@/lib/cn'
 import { capitalize, fmt, isFuture, toISO, todayISO } from '@/lib/date'
@@ -35,9 +33,6 @@ export function JournalPage() {
   const isToday = date === todayISO()
 
   const tasks = useStore((s) => s.tasks)
-  const addTask = useStore((s) => s.addTask)
-  const toggleTask = useStore((s) => s.toggleTask)
-  const removeTask = useStore((s) => s.removeTask)
   const journal = useStore((s) => s.journal)
   const addJournalRecording = useStore((s) => s.addJournalRecording)
   const removeJournalRecording = useStore((s) => s.removeJournalRecording)
@@ -46,14 +41,7 @@ export function JournalPage() {
   const entry = journal[date]
   const recordings = entry?.recordings ?? []
 
-  const dayTasks = useMemo(
-    () => tasks.filter((t) => t.date === date).sort((a, b) => a.order - b.order),
-    [tasks, date],
-  )
-  const tomorrowTasks = useMemo(
-    () => tasks.filter((t) => t.date === tomorrow).sort((a, b) => a.order - b.order),
-    [tasks, tomorrow],
-  )
+  const dayTasks = useMemo(() => tasks.filter((t) => t.date === date), [tasks, date])
 
   const done = dayTasks.filter((t) => t.done).length
   const pct = dayTasks.length === 0 ? 0 : Math.round((done / dayTasks.length) * 100)
@@ -123,37 +111,9 @@ export function JournalPage() {
 
             {dayTasks.length > 0 ? <ProgressBar className="mt-3" value={pct} /> : null}
 
-            {dayTasks.length === 0 ? (
-              <p className="mt-4 text-sm text-ink-faint">
-                No había tareas anotadas para este día.
-              </p>
-            ) : (
-              <ul className="mt-4 flex flex-col gap-1.5">
-                {dayTasks.map((task) => (
-                  <li key={task.id} className="group flex items-center gap-2">
-                    <Checkbox
-                      className="min-w-0 flex-1"
-                      checked={task.done}
-                      onChange={() => toggleTask(task.id)}
-                      label={task.title}
-                    />
-                    <IconButton
-                      label={`Eliminar ${task.title}`}
-                      className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-                      onClick={() => removeTask(task.id)}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </IconButton>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <InlineAdd
-              className="mt-4"
-              placeholder="Me olvidé de anotar una"
-              onAdd={(title) => addTask(date, title)}
-            />
+            <div className="mt-3">
+              <DayTaskList date={date} emptyLabel="No había tareas anotadas para este día." />
+            </div>
           </Card>
 
           {/* ---------------------------------------------- 2. La lectura */}
@@ -308,32 +268,9 @@ export function JournalPage() {
               {capitalize(fmt(addDays(cursor, 1), "EEEE d 'de' MMMM"))}
             </p>
 
-            {tomorrowTasks.length === 0 ? (
-              <p className="mt-3 text-sm text-ink-faint">Todavía no anotaste nada.</p>
-            ) : (
-              <ul className="mt-3 flex flex-col gap-1.5">
-                {tomorrowTasks.map((task) => (
-                  <li key={task.id} className="group flex items-center gap-2">
-                    <span className="min-w-0 flex-1 truncate text-sm text-ink-muted">
-                      {task.title}
-                    </span>
-                    <IconButton
-                      label={`Eliminar ${task.title}`}
-                      className="shrink-0 opacity-0 transition-opacity group-hover:opacity-100"
-                      onClick={() => removeTask(task.id)}
-                    >
-                      <Trash2 className="size-3.5" />
-                    </IconButton>
-                  </li>
-                ))}
-              </ul>
-            )}
-
-            <InlineAdd
-              className="mt-3"
-              placeholder="Tarea para mañana"
-              onAdd={(title) => addTask(tomorrow, title)}
-            />
+            <div className="mt-3">
+              <DayTaskList date={tomorrow} emptyLabel="Todavía no anotaste nada." />
+            </div>
           </Card>
 
           <Panel>

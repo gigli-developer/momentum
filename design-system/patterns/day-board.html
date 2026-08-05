@@ -1,0 +1,137 @@
+<!-- @dsCard group="Patrones" -->
+<style>
+  :root {
+    --bg: #0a0a0b; --surface: #131316; --surface-2: #1a1a1e; --surface-3: #212126;
+    --line: #2a2a30; --line-strong: #3a3a42;
+    --ink: #f4f4f5; --ink-muted: #a8a8b3; --ink-faint: #7c7c88;
+    --accent: #ff5c1a; --accent-ink: #1a0a02;
+  }
+  body {
+    margin: 0; padding: 28px; background: var(--bg); color: var(--ink);
+    font-family: Inter, system-ui, -apple-system, 'Segoe UI', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  h1 { font-size: 18px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+  .lede { font-size: 13px; color: var(--ink-muted); margin: 0 0 22px; max-width: 68ch; line-height: 1.55; }
+  h2 { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.14em;
+       color: var(--ink-faint); margin: 28px 0 10px; }
+  .board { display: flex; gap: 12px; overflow-x: auto; padding-bottom: 8px; }
+  .col { width: 268px; flex: none; border: 1px solid var(--line); background: var(--surface);
+         border-radius: 20px; padding: 12px; }
+  .col.today { border-color: rgba(255,92,26,.45); }
+  .colhead { display: flex; justify-content: space-between; align-items: baseline; padding: 0 6px; margin-bottom: 8px; }
+  .colhead h3 { margin: 0; font-size: 14px; font-weight: 600; }
+  .colhead .d { font-size: 12px; color: var(--ink-faint); font-variant-numeric: tabular-nums; }
+  .today .colhead h3 { color: var(--accent); }
+  .add { display: flex; align-items: center; gap: 10px; padding: 6px; border-radius: 12px;
+         color: var(--accent); font-size: 14px; font-weight: 500; }
+  .row { display: flex; align-items: flex-start; gap: 10px; padding: 6px; border-radius: 12px; }
+  .row.hover { background: var(--surface-2); }
+  .cb { width: 18px; height: 18px; flex: none; border-radius: 999px; border: 1px solid var(--line-strong);
+        margin-top: 2px; display: grid; place-items: center; }
+  .cb.sm { width: 16px; height: 16px; }
+  .cb.on { background: var(--accent); border-color: transparent; }
+  .t { flex: 1; min-width: 0; font-size: 14px; line-height: 1.35; }
+  .t .note { display: block; font-size: 12px; color: var(--ink-faint); margin-top: 2px; line-height: 1.35; }
+  .done .t { color: var(--ink-faint); text-decoration: line-through; }
+  .sub { margin-left: 28px; }
+  .acts { display: flex; gap: 2px; flex: none; }
+  .ic { width: 24px; height: 24px; display: grid; place-items: center; border-radius: 6px; color: var(--ink-faint); }
+  .ic.star { color: var(--accent); }
+  .ic.hidden { opacity: 0; }
+  .completed { display: flex; align-items: center; gap: 6px; padding: 6px; border-radius: 12px;
+               font-size: 14px; color: var(--ink-muted); margin-top: 4px; }
+  .note-txt { font-size: 12px; color: var(--ink-muted); line-height: 1.6; margin-top: 12px; max-width: 68ch; }
+  .note-txt strong { color: var(--ink); font-weight: 500; }
+</style>
+
+<h1>Tablero de días</h1>
+<p class="lede">
+  El planificador semanal usa el modelo de Google Tasks —checkbox circular, subtareas, estrella,
+  «Completadas» plegable— pero las columnas son <strong>días</strong>, no listas temáticas. Scrollea
+  en horizontal; el body nunca.
+</p>
+
+<div class="board">
+  <div class="col today">
+    <div class="colhead"><h3>Martes</h3><span class="d">4 ago</span></div>
+    <div class="add">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 12H3"/><path d="M16 6H3"/><path d="M16 18H3"/><path d="M18 9v6"/><path d="M21 12h-6"/></svg>
+      Agregar tarea
+    </div>
+
+    <div class="row">
+      <span class="cb"></span>
+      <span class="t">Automatización ZAR</span>
+      <span class="acts"><span class="ic hidden"></span></span>
+    </div>
+    <div class="row sub hover">
+      <span class="cb sm"></span>
+      <span class="t">Probar 5 statements viejos para corroborar fiabilidad</span>
+      <span class="acts">
+        <span class="ic star">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M11.5 3.2 9.9 8.1H4.7c-.5 0-.7.6-.3.9l4.2 3-1.6 4.9c-.2.5.4.9.8.6l4.2-3 4.2 3c.4.3 1-.1.8-.6l-1.6-4.9 4.2-3c.4-.3.2-.9-.3-.9h-5.2l-1.6-4.9c-.2-.5-.9-.5-1 0z"/></svg>
+        </span>
+      </span>
+    </div>
+    <div class="row sub">
+      <span class="cb sm"></span>
+      <span class="t">Cruce con intraday Encore</span>
+    </div>
+
+    <div class="row">
+      <span class="cb"></span>
+      <span class="t">Coordinar Personal Days
+        <span class="note">Uno tengo que guardarlo para el turno de moto</span>
+      </span>
+    </div>
+
+    <div class="completed">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m9 18 6-6-6-6"/></svg>
+      Completadas (2)
+    </div>
+  </div>
+
+  <div class="col">
+    <div class="colhead"><h3>Miércoles</h3><span class="d">5 ago</span></div>
+    <div class="add">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 12H3"/><path d="M16 6H3"/><path d="M16 18H3"/><path d="M18 9v6"/><path d="M21 12h-6"/></svg>
+      Agregar tarea
+    </div>
+    <div class="row"><span class="cb"></span><span class="t">Sesión con Fede</span></div>
+    <div class="row done">
+      <span class="cb on">
+        <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#1a0a02" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+      </span>
+      <span class="t">Cena con Mar</span>
+    </div>
+    <div class="row"><span class="cb"></span><span class="t">Cortarme el pelo</span></div>
+  </div>
+
+  <div class="col">
+    <div class="colhead"><h3>Jueves</h3><span class="d">6 ago</span></div>
+    <div class="add">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 12H3"/><path d="M16 6H3"/><path d="M16 18H3"/><path d="M18 9v6"/><path d="M21 12h-6"/></svg>
+      Agregar tarea
+    </div>
+    <div class="row"><span class="cb"></span><span class="t">Automatizar reconciliación de Brasil</span></div>
+  </div>
+</div>
+
+<h2>Reglas</h2>
+<p class="note-txt">
+  El checkbox es <strong>circular</strong> — es lo que separa visualmente una tarea de un hábito,
+  que usa casilla cuadrada. Las subtareas se indentan 28px y usan un checkbox de 16px.
+</p>
+<p class="note-txt">
+  Los íconos de acción (subtarea, eliminar, estrella) aparecen en <strong>hover</strong>, salvo la
+  estrella cuando está marcada: esa queda siempre visible, porque es información y no un control.
+</p>
+<p class="note-txt">
+  Completar una tarea padre <strong>completa sus subtareas</strong>, y el conjunto se muda entero a
+  «Completadas». Una tarea terminada con pendientes colgando adentro no es un estado válido.
+</p>
+<p class="note-txt">
+  El día actual se marca con <strong>borde de acento y título en naranja</strong>, sin relleno: el
+  color pleno está reservado para lo que se puede tocar.
+</p>

@@ -1,11 +1,10 @@
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
 import { monthKey, todayISO, weekStartISO } from './date'
-import { buildEmpty, buildSeed, defaultLifeAreas } from './seed'
+import { buildEmpty, buildSeed, defaultGoalCategories, defaultLifeAreas } from './seed'
 import { STORAGE_KEY, appStorage, newId } from './storage'
 import type {
   AppData,
-  Dream,
   Goal,
   Habit,
   ID,
@@ -18,10 +17,9 @@ import type {
   Profile,
   Quarter,
   RitualEntry,
-  Scope,
   Task,
 } from './types'
-import { MAX_LIFE_AREAS, MIN_LIFE_AREAS } from './types'
+import { MAX_LIFE_AREAS, MIN_GOAL_CATEGORIES, MIN_LIFE_AREAS } from './types'
 
 interface Actions {
   /* Perfil */
@@ -44,8 +42,9 @@ interface Actions {
   removeProject: (id: ID) => void
 
   /* Planificador */
-  addTask: (date: ISODate, title: string) => void
+  addTask: (date: ISODate, title: string, parentId?: ID | null) => void
   toggleTask: (id: ID) => void
+  toggleTaskStar: (id: ID) => void
   updateTask: (id: ID, patch: Partial<Omit<Task, 'id'>>) => void
   removeTask: (id: ID) => void
   setReward: (weekStart: ISODate, text: string) => void
@@ -56,12 +55,11 @@ interface Actions {
   removeJournalRecording: (date: ISODate, recordingId: ID) => void
   toggleJournalClosed: (date: ISODate) => void
 
-  /* Sueños y objetivos */
-  addDream: (scope: Scope, title: string) => void
-  updateDream: (id: ID, patch: Partial<Omit<Dream, 'id'>>) => void
-  toggleDream: (id: ID) => void
-  removeDream: (id: ID) => void
-  addGoal: (input: { scope: Scope; title: string; year: number; quarter: Quarter; dreamId: ID | null }) => void
+  /* Objetivos */
+  addGoalCategory: (label: string) => void
+  renameGoalCategory: (id: ID, label: string) => void
+  removeGoalCategory: (id: ID) => void
+  addGoal: (input: { categoryId: ID; title: string; year: number; quarter: Quarter }) => void
   updateGoal: (id: ID, patch: Partial<Omit<Goal, 'id'>>) => void
   toggleGoal: (id: ID) => void
   removeGoal: (id: ID) => void
@@ -206,7 +204,7 @@ export const useStore = create<Store>()(
         })),
 
       /* -------------------------------------------------- Planificador */
-      addTask: (date, title) =>
+      addTask: (date, title, parentId = null) =>
         set((s) => ({
           tasks: [
             ...s.tasks,
@@ -214,19 +212,42 @@ export const useStore = create<Store>()(
               id: newId(),
               date,
               title,
+              note: '',
               done: false,
-              order: s.tasks.filter((t) => t.date === date).length,
+              starred: false,
+              parentId,
+              order: s.tasks.filter((t) => t.date === date && t.parentId === parentId).length,
             },
           ],
         })),
 
+      // Completar una tarea padre completa sus subtareas: no tiene sentido una
+      // tarea terminada con pendientes colgando adentro.
       toggleTask: (id) =>
-        set((s) => ({ tasks: s.tasks.map((t) => (t.id === id ? { ...t, done: !t.done } : t)) })),
+        set((s) => {
+          const target = s.tasks.find((t) => t.id === id)
+          if (!target) return s
+          const next = !target.done
+          return {
+            tasks: s.tasks.map((t) => {
+              if (t.id === id) return { ...t, done: next }
+              if (next && t.parentId === id) return { ...t, done: true }
+              return t
+            }),
+          }
+        }),
+
+      toggleTaskStar: (id) =>
+        set((s) => ({
+          tasks: s.tasks.map((t) => (t.id === id ? { ...t, starred: !t.starred } : t)),
+        })),
 
       updateTask: (id, patch) =>
         set((s) => ({ tasks: s.tasks.map((t) => (t.id === id ? { ...t, ...patch } : t)) })),
 
-      removeTask: (id) => set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id) })),
+      // Borrar un padre se lleva sus subtareas, o quedan huérfanas e invisibles.
+      removeTask: (id) =>
+        set((s) => ({ tasks: s.tasks.filter((t) => t.id !== id && t.parentId !== id) })),
 
       setReward: (start, text) =>
         set((s) => ({
@@ -287,35 +308,37 @@ export const useStore = create<Store>()(
           }
         }),
 
-      /* ------------------------------------------- Sueños y objetivos */
-      addDream: (scope, title) =>
+      /* ------------------------------------------------------ Objetivos */
+      addGoalCategory: (label) =>
         set((s) => ({
-          dreams: [
-            ...s.dreams,
-            { id: newId(), scope, title, achieved: false, createdAt: todayISO() },
+          goalCategories: [
+            ...s.goalCategories,
+            { id: newId(), label, order: s.goalCategories.length },
           ],
         })),
 
-      updateDream: (id, patch) =>
-        set((s) => ({ dreams: s.dreams.map((d) => (d.id === id ? { ...d, ...patch } : d)) })),
-
-      toggleDream: (id) =>
+      renameGoalCategory: (id, label) =>
         set((s) => ({
-          dreams: s.dreams.map((d) => (d.id === id ? { ...d, achieved: !d.achieved } : d)),
+          goalCategories: s.goalCategories.map((c) => (c.id === id ? { ...c, label } : c)),
         })),
 
-      // Los objetivos que colgaban del sueño no se borran: quedan sueltos.
-      removeDream: (id) =>
-        set((s) => ({
-          dreams: s.dreams.filter((d) => d.id !== id),
-          goals: s.goals.map((g) => (g.dreamId === id ? { ...g, dreamId: null } : g)),
-        })),
+      // Se lleva puestos sus objetivos: la UI confirma antes, mostrando cuántos.
+      removeGoalCategory: (id) =>
+        set((s) => {
+          if (s.goalCategories.length <= MIN_GOAL_CATEGORIES) return s
+          return {
+            goalCategories: s.goalCategories
+              .filter((c) => c.id !== id)
+              .map((c, i) => ({ ...c, order: i })),
+            goals: s.goals.filter((g) => g.categoryId !== id),
+          }
+        }),
 
-      addGoal: ({ scope, title, year, quarter, dreamId }) =>
+      addGoal: ({ categoryId, title, year, quarter }) =>
         set((s) => ({
           goals: [
             ...s.goals,
-            { id: newId(), scope, title, year, quarter, dreamId, done: false, createdAt: todayISO() },
+            { id: newId(), categoryId, title, year, quarter, done: false, createdAt: todayISO() },
           ],
         })),
 
@@ -390,7 +413,7 @@ export const useStore = create<Store>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 3,
+      version: 4,
       storage: createJSONStorage(() => appStorage),
       // Sin migración, quien ya venía usando la app se queda sin áreas (la rueda
       // revienta) o sin la clave del journal.
@@ -406,6 +429,28 @@ export const useStore = create<Store>()(
         if (version < 3) {
           if (typeof data.journal !== 'object' || data.journal === null) data.journal = {}
         }
+        // v3 → v4: secciones de objetivos como datos, se eliminan los sueños y
+        // las tareas ganan nota, estrella y subtareas.
+        if (version < 4) {
+          if (!Array.isArray(data.goalCategories)) data.goalCategories = defaultGoalCategories()
+          if (Array.isArray(data.goals)) {
+            data.goals = (data.goals as Array<Record<string, unknown>>).map((goal) => {
+              const { scope, dreamId, ...rest } = goal
+              void dreamId
+              // Los ids por defecto coinciden con los valores viejos de `scope`.
+              return { ...rest, categoryId: goal.categoryId ?? scope ?? 'personal' }
+            })
+          }
+          if (Array.isArray(data.tasks)) {
+            data.tasks = (data.tasks as Array<Record<string, unknown>>).map((task) => ({
+              note: '',
+              starred: false,
+              parentId: null,
+              ...task,
+            }))
+          }
+          delete data.dreams
+        }
         return data as unknown as AppData
       },
       // Sólo persistimos datos: las acciones se reconstruyen en cada arranque.
@@ -419,7 +464,7 @@ export const useStore = create<Store>()(
         tasks: s.tasks,
         rewards: s.rewards,
         journal: s.journal,
-        dreams: s.dreams,
+        goalCategories: s.goalCategories,
         goals: s.goals,
         lifeAreas: s.lifeAreas,
         wheel: s.wheel,
@@ -457,7 +502,7 @@ export function snapshot(s: Store): AppData {
     tasks: s.tasks,
     rewards: s.rewards,
     journal: s.journal,
-    dreams: s.dreams,
+    goalCategories: s.goalCategories,
     goals: s.goals,
     lifeAreas: s.lifeAreas,
     wheel: s.wheel,

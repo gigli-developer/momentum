@@ -259,9 +259,13 @@ export function recentAchievements(data: AppData): Achievement[] {
     out.push({ id: 'goals', emoji: '🎯', label: `${goalsDone} objetivos cumplidos` })
   }
 
-  const dreamsDone = data.dreams.filter((d) => d.achieved).length
-  if (dreamsDone > 0) {
-    out.push({ id: 'dreams', emoji: '⭐', label: `${dreamsDone} sueños cumplidos` })
+  const journalDays = closedJournalDays(data).length
+  if (journalDays > 0) {
+    out.push({
+      id: 'journal',
+      emoji: '📓',
+      label: `${journalDays} ${journalDays === 1 ? 'día' : 'días'} de journal`,
+    })
   }
 
   return out.slice(0, 3)
