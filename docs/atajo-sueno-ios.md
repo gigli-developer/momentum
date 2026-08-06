@@ -1,108 +1,202 @@
 # Atajo de iOS para mandar el sueño a Momentum
 
-Cada mañana, este Atajo lee el sueño de la noche anterior del Apple Watch y lo manda a la app. Se
+Cada mañana, este Atajo lee el sueño de la noche anterior del Apple Watch y lo manda a Momentum. Se
 configura una sola vez y después corre solo.
 
 > **Por qué un Atajo y no una integración.** Apple no deja que una app web lea HealthKit: esos datos
 > sólo son accesibles desde apps nativas firmadas corriendo en el dispositivo. Shortcuts es la única
 > vía oficial que no requiere publicar una app en la App Store.
 
+> **Advertencia honesta:** esta receta no está probada en un dispositivo real. La estructura es
+> correcta, pero los nombres exactos de las acciones cambian un poco entre versiones de iOS. Si algo
+> no coincide, avisá qué ves en pantalla y lo ajustamos.
+
+---
+
 ## Antes de empezar
 
-Necesitás tres cosas del proyecto de Supabase:
+Necesitás dos cosas:
 
-1. La URL de la función: `https://TU_PROJECT_REF.supabase.co/functions/v1/ingest-sleep`
-2. Un **token de ingesta**, que se genera desde Ajustes en Momentum. Se muestra una sola vez.
-3. Tener dormido con el Watch al menos una noche, con Seguimiento del Sueño activado.
+1. **La URL de la función**, que va a ser
+   `https://TU_PROJECT_REF.supabase.co/functions/v1/ingest-sleep`
+2. **Un token de ingesta.** Todavía no existe la pantalla para generarlo en Momentum, así que por
+   ahora se crea a mano desde el SQL Editor de Supabase:
 
-## Armar el Atajo
-
-Abrí **Atajos → + → Nuevo atajo** y agregá estas acciones en orden.
-
-### 1. Buscar las muestras de sueño
-
-- Acción: **Buscar muestras de salud**
-- Tipo: **Análisis del sueño**
-- Filtro: `Fecha de inicio` — `es hoy` (o `está en los últimos` → `1` → `días`)
-- Ordenar por: `Fecha de inicio`, ascendente
-- Límite: desactivado
-
-### 2. Repetir sobre cada muestra
-
-- Acción: **Repetir con cada elemento** sobre el resultado anterior.
-
-Adentro del repetir, vas a ir sumando duración por fase. La forma más simple que no requiere
-variables complejas:
-
-- **Obtener detalles de la muestra de salud** → `Valor` (te da la fase: Profundo, REM, Central,
-  Despierto)
-- **Obtener detalles de la muestra de salud** → `Duración`
-- Un **Si** por cada fase que sume a una variable distinta (`deep`, `rem`, `core`, `awake`).
-
-> Si te resulta pesado, hay un atajo más corto: sumá sólo la duración total dormida (todo lo que no
-> sea `Despierto`) y mandá eso. Las fases son lindas pero no imprescindibles — el módulo las muestra
-> como "Sin fase" y el resto de las métricas funciona igual.
-
-### 3. Calcular la noche
-
-- **Fecha** → `Hoy`, formateada como `yyyy-MM-dd`. Esa es la clave `night`.
-- La **primera** muestra te da `bedtime`; la **última**, `wakeTime`. Formatealas ISO 8601.
-
-### 4. Mandarlo
-
-- Acción: **Obtener contenido de la URL**
-- URL: `https://TU_PROJECT_REF.supabase.co/functions/v1/ingest-sleep`
-- Método: **POST**
-- Cabeceras:
-  - `x-ingest-token` → tu token
-  - `Content-Type` → `application/json`
-- Cuerpo de la solicitud: **JSON**
-
-```json
-{
-  "night": "2026-08-04",
-  "bedtime": "2026-08-03T23:41:00-03:00",
-  "wakeTime": "2026-08-04T07:12:00-03:00",
-  "asleepMinutes": 428,
-  "awakeMinutes": 23,
-  "remMinutes": 96,
-  "coreMinutes": 259,
-  "deepMinutes": 73
-}
+```sql
+-- Cambiá 'un-token-largo-y-random' por algo tuyo, largo e impredecible.
+insert into public.ingest_tokens (user_id, token_hash, label)
+values (
+  auth.uid(),
+  encode(digest('un-token-largo-y-random', 'sha256'), 'hex'),
+  'Atajo de iOS'
+);
 ```
 
-Sólo `night`, `bedtime`, `wakeTime` y `asleepMinutes` son obligatorios. Si no mandás las fases, se
-guardan en cero y el minutaje dormido cae en "sin fase".
+Guardá el token en claro en tu gestor de contraseñas: en la base sólo queda el hash y no se puede
+recuperar.
 
-## Automatizarlo
+Y obviamente: tenés que haber dormido con el Watch, con **Seguimiento del Sueño** activado.
 
-**Atajos → Automatización → + → Hora del día**
+---
 
-- Hora: **10:00** (dale margen: el Watch tarda un rato en sincronizar el sueño al iPhone)
-- Repetir: **Diariamente**
-- Acción: ejecutar el atajo que armaste
-- **Ejecutar inmediatamente**, y desactivá "Preguntar antes de ejecutar"
+## La idea de la receta
+
+En vez de recorrer las muestras una por una con un bucle y sumar a mano (que es lo tedioso en
+Shortcuts), hacemos **una consulta por fase** y dejamos que Salud sume. Queda todo lineal, sin
+variables ni condicionales.
+
+---
+
+## Paso a paso
+
+Abrí **Atajos → + (arriba a la derecha)**. Vas a agregar estas acciones en orden, buscándolas en el
+buscador de abajo.
+
+### 1. La fecha de la noche
+
+- Buscá **Fecha** y agregala. Dejala en `Fecha actual`.
+- Buscá **Formatear fecha**. Tocá el formato y elegí **Personalizado**, con el patrón:
+
+  ```
+  yyyy-MM-dd
+  ```
+
+- Tocá el resultado y renombrá la variable a **`noche`** (mantené apretado → Renombrar variable).
+
+### 2. Minutos de sueño profundo
+
+- Buscá **Buscar muestras de salud**. Configurala así:
+  - Tipo de muestra: **Análisis del sueño**
+  - Tocá **Agregar filtro** → `Valor` → **es** → **Profundo**
+  - Tocá **Agregar filtro** → `Fecha de inicio` → **está en los últimos** → `1` `día`
+- Buscá **Calcular estadísticas**. Elegí **Suma** de **Duración** sobre el resultado anterior.
+- Buscá **Calcular** y dividí el resultado **÷ 60** (la duración viene en segundos).
+- Buscá **Redondear** → al número entero más cercano.
+- Renombrá esa variable a **`profundo`**.
+
+### 3, 4 y 5. Repetir para las otras fases
+
+Exactamente los mismos cinco pasos, cambiando sólo el filtro de `Valor` y el nombre de la variable:
+
+| Filtro de valor | Variable |
+| --- | --- |
+| **REM** | `rem` |
+| **Central** (o *Core*) | `ligero` |
+| **Despierto** | `despierto` |
+
+> Truco: seleccioná las 5 acciones del bloque anterior, copiá y pegá tres veces. Después cambiás
+> sólo el filtro y el nombre. Es mucho más rápido que armarlas de cero.
+
+### 6. Total dormido
+
+- Buscá **Calcular** y sumá: `profundo` + `rem` + `ligero`.
+- Renombrá el resultado a **`dormido`**.
+
+### 7. Hora de acostarse y de levantarse
+
+- Buscá **Buscar muestras de salud** otra vez:
+  - Tipo: **Análisis del sueño**
+  - Filtro: `Fecha de inicio` → **está en los últimos** → `1` `día`
+  - **Ordenar por**: `Fecha de inicio`, **Ascendente**
+  - **Límite**: activado, `1` muestra
+- Buscá **Obtener detalles de la muestra de salud** → **Fecha de inicio**.
+- Renombrá a **`acostada`**.
+
+Ahora lo mismo pero al revés, para la hora de levantarse:
+
+- Otra **Buscar muestras de salud**, igual pero **Descendente**, límite `1`.
+- **Obtener detalles de la muestra de salud** → **Fecha de término**.
+- Renombrá a **`levantada`**.
+
+### 8. Mandarlo
+
+- Buscá **Obtener contenido de la URL**.
+- URL: `https://TU_PROJECT_REF.supabase.co/functions/v1/ingest-sleep`
+- Tocá la flechita para desplegar las opciones:
+  - **Método**: `POST`
+  - **Cabeceras**: agregá dos
+    - `x-ingest-token` → tu token
+    - `Content-Type` → `application/json`
+  - **Cuerpo de la solicitud**: **JSON**, y agregá estos campos (el ícono de cada uno tiene que
+    quedar en **Número** donde corresponde, no en Texto):
+
+| Campo | Tipo | Valor |
+| --- | --- | --- |
+| `night` | Texto | `noche` |
+| `bedtime` | Texto | `acostada` |
+| `wakeTime` | Texto | `levantada` |
+| `asleepMinutes` | Número | `dormido` |
+| `awakeMinutes` | Número | `despierto` |
+| `remMinutes` | Número | `rem` |
+| `coreMinutes` | Número | `ligero` |
+| `deepMinutes` | Número | `profundo` |
+
+Sólo los primeros cuatro son obligatorios.
+
+### 9. Ver si funcionó
+
+- Buscá **Mostrar resultado** y ponelo al final, con el resultado de la URL. Cuando confirmes que
+  anda, borralo.
+
+Ponele nombre al atajo arriba: **Sueño → Momentum**.
+
+---
 
 ## Probarlo
 
-Corré el Atajo a mano. Si todo salió bien, la respuesta es:
+Ejecutá el atajo a mano con el botón de play. La primera vez iOS te va a pedir **permiso para leer
+datos de Salud** y **permiso para enviar datos a ese servidor**: aceptá los dos.
+
+Si salió bien vas a ver:
 
 ```json
-{ "ok": true, "night": "2026-08-04", "asleepMinutes": 428 }
+{ "ok": true, "night": "2026-08-05", "asleepMinutes": 428 }
 ```
 
 | Respuesta | Qué pasó |
 | --- | --- |
 | `401 Falta el header x-ingest-token` | La cabecera no se guardó en la acción de URL |
-| `401 Token inválido o revocado` | El token está mal copiado, o lo revocaste desde Ajustes |
-| `400 night tiene que ser YYYY-MM-DD` | La fecha se está mandando con otro formato |
-| `400 Te levantaste antes de acostarte` | `bedtime` y `wakeTime` están invertidos |
-| `400 La noche dura más de 24 horas` | El filtro está tomando muestras de varios días |
+| `401 Token inválido o revocado` | El token está mal copiado, o lo revocaste |
+| `400 night tiene que ser YYYY-MM-DD` | El patrón de Formatear fecha quedó mal |
+| `400 Te levantaste antes de acostarte` | `acostada` y `levantada` están invertidas |
+| `400 La noche dura más de 24 horas` | El filtro está tomando muestras de más de un día |
+| `400 asleepMinutes tiene que ser mayor a 0` | Los campos numéricos quedaron como Texto en el JSON |
+
+---
+
+## Automatizarlo
+
+**Atajos → pestaña Automatización → + → Hora del día**
+
+- Hora: **10:00**. Dale margen: el Watch tarda un rato en pasarle el sueño al iPhone.
+- Repetir: **Diariamente**
+- Acción: **Ejecutar atajo** → `Sueño → Momentum`
+- Importante: activá **Ejecutar inmediatamente** y desactivá **Preguntar antes de ejecutar**
+
+---
+
+## Si un día falla
+
+La receta manda **sólo la noche de hoy**. Si el teléfono estuvo apagado o la automatización no
+corrió, esa noche no llega.
+
+Dos formas de taparlo:
+
+1. **Correr el atajo a mano** ese mismo día. Es idempotente: mandar dos veces la misma noche la
+   pisa, no la duplica.
+2. **Reimportar el `export.xml`** de Salud cada tanto desde el módulo de Sueño. Trae todo el
+   histórico y rellena cualquier agujero.
+
+---
 
 ## Seguridad
 
-El token es **la única credencial** que viaja en el Atajo, y sólo sirve para escribir noches de
-sueño: no da acceso a nada más de tu cuenta. Se guarda hasheado en la base, así que ni leyendo la
+El token es la única credencial que viaja en el Atajo y **sólo sirve para escribir noches de
+sueño**: no da acceso a nada más de tu cuenta. Se guarda hasheado con sha256, así que ni leyendo la
 tabla se puede recuperar.
 
-Si perdés el teléfono, revocá el token desde Ajustes y generá uno nuevo.
+Si perdés el teléfono, revocalo:
+
+```sql
+update public.ingest_tokens set revoked_at = now() where label = 'Atajo de iOS';
+```
