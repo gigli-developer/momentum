@@ -1,6 +1,6 @@
 import { subDays } from 'date-fns'
 import { fromISO, lastNDays, monthKeyOf, toISO, todayISO, weekDays } from './date'
-import type { AppData, Habit, ID, ISODate } from './types'
+import type { AppData, Habit, ID, ISODate, SleepNight } from './types'
 
 /* ------------------------------------------------------------------ Rachas */
 
@@ -216,6 +216,136 @@ export function journalAudioBytes(data: AppData): number {
     (acc, entry) => acc + entry.recordings.reduce((sum, r) => sum + r.size, 0),
     0,
   )
+}
+
+/* --------------------------------------------------------------------- Sueño */
+
+export interface SleepSummary {
+  nights: number
+  /** Promedio de minutos dormidos. */
+  averageAsleep: number
+  averageInBed: number
+  /** Eficiencia: dormido / en cama, en porcentaje. */
+  efficiency: number
+  /** Minutos por debajo del objetivo, acumulados. 0 si no hay deuda. */
+  debtMinutes: number
+  /** Promedio de cada fase, en minutos. */
+  stages: { awake: number; rem: number; core: number; deep: number }
+  /**
+   * Desvío estándar de la hora de acostarse, en minutos. Cuanto más bajo, más
+   * regular sos. Es el indicador que más correlaciona con dormir bien.
+   */
+  bedtimeConsistency: number
+  /** Hora promedio de acostarse, en minutos desde medianoche (puede ser > 24h). */
+  averageBedtime: number
+}
+
+/** Minutos desde la medianoche ANTERIOR; 1:30 AM devuelve 1530, no 90. */
+function bedtimeOffset(night: SleepNight): number {
+  const bed = new Date(night.bedtime)
+  const minutes = bed.getHours() * 60 + bed.getMinutes()
+  // Acostarse después de medianoche pertenece a la noche anterior.
+  return minutes < 12 * 60 ? minutes + 24 * 60 : minutes
+}
+
+export function sleepSummary(
+  sleep: Record<ISODate, SleepNight>,
+  targetMinutes: number,
+  window = 7,
+): SleepSummary {
+  const days = new Set(lastNDays(window).map(toISO))
+  const nights = Object.values(sleep).filter((n) => days.has(n.date))
+
+  const empty: SleepSummary = {
+    nights: 0,
+    averageAsleep: 0,
+    averageInBed: 0,
+    efficiency: 0,
+    debtMinutes: 0,
+    stages: { awake: 0, rem: 0, core: 0, deep: 0 },
+    bedtimeConsistency: 0,
+    averageBedtime: 0,
+  }
+  if (nights.length === 0) return empty
+
+  const n = nights.length
+  const sum = (fn: (night: SleepNight) => number) => nights.reduce((acc, x) => acc + fn(x), 0)
+  const averageAsleep = Math.round(sum((x) => x.asleepMinutes) / n)
+  const averageInBed = Math.round(sum((x) => x.inBedMinutes) / n)
+
+  const offsets = nights.map(bedtimeOffset)
+  const averageBedtime = offsets.reduce((a, b) => a + b, 0) / n
+  const variance = offsets.reduce((acc, o) => acc + (o - averageBedtime) ** 2, 0) / n
+
+  return {
+    nights: n,
+    averageAsleep,
+    averageInBed,
+    efficiency: averageInBed === 0 ? 0 : Math.round((averageAsleep / averageInBed) * 100),
+    debtMinutes: Math.max(0, sum((x) => Math.max(0, targetMinutes - x.asleepMinutes))),
+    stages: {
+      awake: Math.round(sum((x) => x.stages.awake) / n),
+      rem: Math.round(sum((x) => x.stages.rem) / n),
+      core: Math.round(sum((x) => x.stages.core) / n),
+      deep: Math.round(sum((x) => x.stages.deep) / n),
+    },
+    bedtimeConsistency: Math.round(Math.sqrt(variance)),
+    averageBedtime: Math.round(averageBedtime),
+  }
+}
+
+export interface SleepEnergyPoint {
+  date: ISODate
+  asleepMinutes: number
+  energy: number
+}
+
+/**
+ * Cruza cuánto dormiste con el nivel de energía que cargaste esa mañana en el
+ * ritual. Es el único cruce de la app entre dos módulos distintos.
+ */
+export function sleepVsEnergy(data: AppData): SleepEnergyPoint[] {
+  return Object.values(data.sleep)
+    .map((night) => {
+      const ritual = data.rituals[night.date]
+      if (!ritual) return null
+      return { date: night.date, asleepMinutes: night.asleepMinutes, energy: ritual.energy }
+    })
+    .filter((point): point is SleepEnergyPoint => point !== null)
+    .sort((a, b) => a.date.localeCompare(b.date))
+}
+
+/** Coeficiente de Pearson, o `null` si no hay datos suficientes o no hay varianza. */
+export function correlation(points: Array<[number, number]>): number | null {
+  const n = points.length
+  if (n < 4) return null
+  const meanX = points.reduce((a, [x]) => a + x, 0) / n
+  const meanY = points.reduce((a, [, y]) => a + y, 0) / n
+  let num = 0
+  let dx = 0
+  let dy = 0
+  for (const [x, y] of points) {
+    num += (x - meanX) * (y - meanY)
+    dx += (x - meanX) ** 2
+    dy += (y - meanY) ** 2
+  }
+  if (dx === 0 || dy === 0) return null
+  return num / Math.sqrt(dx * dy)
+}
+
+/** `7h 32m` */
+export function formatMinutes(minutes: number): string {
+  const h = Math.floor(minutes / 60)
+  const m = Math.round(minutes % 60)
+  return h === 0 ? `${m}m` : `${h}h ${String(m).padStart(2, '0')}m`
+}
+
+/** Minutos desde medianoche a `23:45`, tolerando valores por encima de 24 h. */
+export function formatClock(minutesFromMidnight: number): string {
+  const total = ((minutesFromMidnight % 1440) + 1440) % 1440
+  const h = Math.floor(total / 60)
+  const m = Math.round(total % 60)
+  return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`
 }
 
 /* ------------------------------------------------------------------ Rituales */

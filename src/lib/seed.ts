@@ -1,6 +1,15 @@
 import { addDays, differenceInCalendarDays, subDays, subMonths } from 'date-fns'
 import { monthKey, toISO, todayISO, weekStart, weekStartISO } from './date'
-import type { AppData, Goal, GoalCategory, Habit, LifeArea, Task, WheelScores } from './types'
+import type {
+  AppData,
+  Goal,
+  GoalCategory,
+  Habit,
+  LifeArea,
+  SleepNight,
+  Task,
+  WheelScores,
+} from './types'
 
 /**
  * Secciones por defecto de Objetivos. El usuario puede renombrarlas, borrarlas
@@ -114,6 +123,98 @@ const LAST_MONTH: WheelScores = {
 }
 
 /**
+ * 45 noches con la forma que tiene el sueño real: se duerme tarde los viernes
+ * y sábados, y las proporciones de fases rondan lo que reporta un Apple Watch
+ * (profundo ~15%, REM ~22%, core el resto).
+ */
+function buildSleepNights(rnd: () => number, today: Date): Record<string, SleepNight> {
+  const nights: Record<string, SleepNight> = {}
+
+  for (let d = 45; d >= 1; d--) {
+    const morning = subDays(today, d)
+    const weekday = morning.getDay() // 0 domingo, 6 sábado
+    const lateNight = weekday === 6 || weekday === 0 // amanece sábado o domingo
+
+    // Hora de acostarse: base 23:30, más tarde los fines de semana.
+    const bedMinutes = (lateNight ? 24 * 60 + 50 : 23 * 60 + 30) + Math.round((rnd() - 0.5) * 70)
+    const inBed = (lateNight ? 465 : 450) + Math.round((rnd() - 0.5) * 90)
+    const awake = 12 + Math.round(rnd() * 22)
+    const asleep = inBed - awake
+
+    const deep = Math.round(asleep * (0.13 + rnd() * 0.05))
+    const rem = Math.round(asleep * (0.19 + rnd() * 0.07))
+    const core = asleep - deep - rem
+
+    const bedtime = new Date(morning)
+    bedtime.setHours(0, 0, 0, 0)
+    bedtime.setMinutes(bedMinutes - 24 * 60)
+
+    const wakeTime = new Date(bedtime.getTime() + inBed * 60_000)
+
+    nights[toISO(morning)] = {
+      date: toISO(morning),
+      bedtime: bedtime.toISOString(),
+      wakeTime: wakeTime.toISOString(),
+      asleepMinutes: asleep,
+      inBedMinutes: inBed,
+      stages: { awake, rem, core, deep, unspecified: 0 },
+      source: 'import',
+      updatedAt: wakeTime.toISOString(),
+    }
+  }
+
+  return nights
+}
+
+const MISSIONS = [
+  'Ir a ver el mar',
+  'Cerrar la automatización de una vez',
+  'Salir a correr antes de abrir la compu',
+  'Llamar a mamá sin apuro',
+  'Terminar el informe y soltar',
+  'Un día sin reuniones',
+  'Cocinar algo que me guste',
+]
+
+/**
+ * Rituales de los últimos 14 días. La energía se deriva del sueño de esa noche
+ * más ruido, para que el cruce sueño/energía del módulo tenga algo real que
+ * mostrar en vez de un estado vacío.
+ */
+function buildRituals(
+  rnd: () => number,
+  today: Date,
+  sleep: Record<string, SleepNight>,
+): AppData['rituals'] {
+  const rituals: AppData['rituals'] = {}
+  const pillarIds = ['pillar-productividad', 'pillar-cuerpo', 'pillar-vinculos', 'pillar-mente']
+
+  for (let d = 14; d >= 0; d--) {
+    const day = subDays(today, d)
+    const date = toISO(day)
+    const night = sleep[date]
+
+    // 7 h de sueño ≈ energía 3; cada hora extra suma ~1 punto, con ruido.
+    const base = night ? 3 + (night.asleepMinutes - 420) / 60 : 3
+    const energy = Math.max(1, Math.min(5, Math.round(base + (rnd() - 0.5) * 1.6)))
+
+    rituals[date] = {
+      date,
+      mission: d === 0 ? 'Ir a ver el mar' : MISSIONS[d % MISSIONS.length],
+      pillarId: pillarIds[d % pillarIds.length],
+      sapo: d === 0 ? 'Cortarme el pelo' : '',
+      sapoDone: d !== 0 && rnd() > 0.4,
+      projectIds: d === 0 ? ['proj-orden', 'proj-cuerpo'] : [],
+      energy,
+      // El de hoy queda abierto: es el que el usuario va a completar.
+      completedAt: d === 0 ? null : subDays(today, d).toISOString(),
+    }
+  }
+
+  return rituals
+}
+
+/**
  * Datos de ejemplo para que la app no arranque vacía.
  * Todo se genera relativo a hoy, así el seed nunca "envejece".
  */
@@ -185,6 +286,8 @@ export function buildSeed(): AppData {
 
   // Los grupos arrancan en hoy y siguen hacia adelante; si hoy es fin de semana
   // retroceden, así el seed nunca deja el día actual vacío.
+  const sleepNights = buildSleepNights(rnd, today)
+
   const monday = weekStart(today)
   const todayOffset = Math.max(0, Math.min(6, differenceInCalendarDays(today, monday)))
   const tasks: Task[] = []
@@ -282,23 +385,14 @@ export function buildSeed(): AppData {
       name: 'Lucas',
       birthDate: '1992-07-04',
       lifeExpectancy: 80,
+      sleepTargetMinutes: 480,
     },
+    sleep: sleepNights,
     habits,
     habitLogs,
     pillars,
     projects,
-    rituals: {
-      [now]: {
-        date: now,
-        mission: 'Ir a ver el mar',
-        pillarId: 'pillar-productividad',
-        sapo: 'Cortarme el pelo',
-        sapoDone: false,
-        projectIds: ['proj-orden', 'proj-cuerpo'],
-        energy: 4,
-        completedAt: null,
-      },
-    },
+    rituals: buildRituals(rnd, today, sleepNights),
     tasks,
     rewards: {
       [weekStartISO(today)]: { weekStart: weekStartISO(today), text: '', claimed: false },
@@ -321,7 +415,8 @@ export function buildSeed(): AppData {
 /** Estado vacío, para cuando el usuario quiere arrancar de cero. */
 export function buildEmpty(): AppData {
   return {
-    profile: { name: '', birthDate: '', lifeExpectancy: 80 },
+    profile: { name: '', birthDate: '', lifeExpectancy: 80, sleepTargetMinutes: 480 },
+    sleep: {},
     habits: [],
     habitLogs: {},
     pillars: [],

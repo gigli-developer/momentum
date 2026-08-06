@@ -1,7 +1,8 @@
 import { useMemo } from 'react'
+import { subDays } from 'date-fns'
 import { Link } from 'react-router-dom'
 import { useShallow } from 'zustand/react/shallow'
-import { ArrowUpRight, Flame, Mic } from 'lucide-react'
+import { ArrowUpRight, Flame, Mic, Moon } from 'lucide-react'
 import { IconTile } from '@/components/ui/Card'
 import { ProgressBar } from '@/components/ui/Progress'
 import { catColor, cn } from '@/lib/cn'
@@ -15,7 +16,14 @@ import {
   todayISO,
   weekStartISO,
 } from '@/lib/date'
-import { habitStats, journalStreak, lifeProgress, weeklyHabitProgress } from '@/lib/stats'
+import {
+  formatMinutes,
+  habitStats,
+  journalStreak,
+  lifeProgress,
+  sleepSummary,
+  weeklyHabitProgress,
+} from '@/lib/stats'
 import { snapshot, useStore } from '@/lib/store'
 import { GRID_MODULES } from '@/modules/registry'
 import { RadarChart } from '@/modules/wheel/RadarChart'
@@ -66,6 +74,11 @@ export function DashboardPage() {
   const topStreaks = [...stats].sort((a, b) => b.streak - a.streak).slice(0, 3)
   const journalToday = data.journal[today]
   const journalRacha = useMemo(() => journalStreak(data), [data])
+  const sleep = useMemo(
+    () => sleepSummary(data.sleep, data.profile.sleepTargetMinutes, 7),
+    [data.sleep, data.profile.sleepTargetMinutes],
+  )
+  const lastNight = data.sleep[today] ?? data.sleep[toISO(subDays(new Date(), 1))]
   const reward = data.rewards[weekStartISO()]
   const activeCategory = data.goalCategories[0]
 
@@ -209,6 +222,54 @@ export function DashboardPage() {
             ? `Racha de ${journalRacha} ${journalRacha === 1 ? 'día' : 'días'} escribiendo`
             : 'Todavía no cerraste ningún día'}
         </p>
+      </PreviewShell>
+    ),
+
+    /* ---------------------------------------------------------------- Sueño */
+    sueno: (
+      <PreviewShell>
+        {lastNight ? (
+          <>
+            <div className="flex items-end justify-between gap-3">
+              <div>
+                <Muted>Anoche</Muted>
+                <p className="text-2xl font-semibold tabular-nums">
+                  {formatMinutes(lastNight.asleepMinutes)}
+                </p>
+              </div>
+              <span
+                className={cn(
+                  'flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs',
+                  lastNight.asleepMinutes >= data.profile.sleepTargetMinutes
+                    ? 'bg-accent/12 text-accent'
+                    : 'bg-surface-3 text-ink-faint',
+                )}
+              >
+                <Moon className="size-3" />
+                {formatMinutes(sleep.averageAsleep)} prom.
+              </span>
+            </div>
+            <div className="mt-3 flex h-2 overflow-hidden rounded-full bg-surface-3">
+              {(
+                [
+                  ['deep', 'var(--color-ramp-4)'],
+                  ['rem', 'var(--color-ramp-3)'],
+                  ['core', 'var(--color-ramp-2)'],
+                ] as const
+              ).map(([key, color]) => (
+                <span
+                  key={key}
+                  style={{
+                    width: `${(lastNight.stages[key] / (lastNight.inBedMinutes || 1)) * 100}%`,
+                    backgroundColor: color,
+                  }}
+                />
+              ))}
+            </div>
+          </>
+        ) : (
+          <Muted>Todavía no importaste tus noches.</Muted>
+        )}
       </PreviewShell>
     ),
 

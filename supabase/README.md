@@ -11,6 +11,7 @@ localStorage y pasa a leer y escribir contra la base, con login obligatorio.
 | `20260804120100_rls.sql` | RLS en todas las tablas, una política por usuario |
 | `20260804120200_storage.sql` | Bucket privado `journal-audio` y sus políticas |
 | `20260804120300_defaults_on_signup.sql` | Secciones y áreas por defecto + guardas de mínimos |
+| `20260804130000_sleep.sql` | Noches de sueño y tokens de ingesta para el Atajo de iOS |
 
 Se aplican **en ese orden**.
 
@@ -33,7 +34,24 @@ goals                 objetivos por año y trimestre
 life_areas            áreas de la rueda
 wheel_scores          puntaje por área y mes — PK (user_id, month, area_id)
 orphaned_audio        archivos de Storage a limpiar (ver más abajo)
+sleep_nights          una noche por fila — PK (user_id, night)
+ingest_tokens         tokens del Atajo de iOS, guardados hasheados
 ```
+
+## Edge Function `ingest-sleep`
+
+Recibe el sueño del Atajo de iOS. Se despliega con:
+
+```bash
+supabase functions deploy ingest-sleep --no-verify-jwt
+```
+
+`--no-verify-jwt` es necesario **y correcto** acá: un Atajo no puede renovar un JWT de Supabase, así
+que la función hace su propia validación con un token largo (`x-ingest-token`) que se guarda
+hasheado con sha256. Sin ese flag, Supabase rechazaría el request antes de que el código lo vea.
+
+El token sólo sirve para escribir noches de sueño. Si se filtra, se revoca desde Ajustes sin tocar
+el resto de la cuenta. La guía del Atajo está en [`docs/atajo-sueno-ios.md`](../docs/atajo-sueno-ios.md).
 
 ## Invariantes que sostiene la base
 

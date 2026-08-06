@@ -16,6 +16,7 @@ navegador, sin cuenta ni backend.
 | Ritual Matutino | `/ritual` | Misión del día, pilar, SAPO, proyectos, nivel de energía y logros |
 | Planificador semanal | `/semana` | Tablero de columnas por día, estilo Google Tasks |
 | Journal | `/journal` | Cierre diario: tareas cumplidas, audio de la lectura y armado de mañana |
+| Sueño | `/sueno` | Noches del Apple Watch, fases, regularidad y cruce con la energía |
 | Objetivos y metas | `/objetivos` | Metas por trimestre y año, en secciones que define el usuario |
 | Rueda de la vida | `/rueda` | Radar de áreas configurables (3 a 10) con comparación contra el mes anterior |
 | Estadísticas y rachas | `/estadisticas` | Progreso semanal, mejores rachas y hábitos, evolución 7d vs 7d |
@@ -34,6 +35,29 @@ subtareas (`parentId`). Reglas:
 - Completar una tarea padre completa sus subtareas.
 - Borrar una tarea padre borra sus subtareas.
 - Una tarea pasa a "Completadas" cuando el **padre** está hecho, y arrastra sus subtareas.
+
+### Sueño y Apple Watch
+
+**Una app web no puede leer HealthKit.** Apple sólo expone esos datos a apps nativas firmadas
+corriendo en el dispositivo, así que no hay integración directa posible. Los datos entran por tres
+vías, todas convergiendo en `SleepNight`:
+
+| Vía | Cuándo | Cómo |
+| --- | --- | --- |
+| Atajo de iOS | Cada mañana, automático | POST a la Edge Function `ingest-sleep` — ver [docs/atajo-sueno-ios.md](../docs/atajo-sueno-ios.md) |
+| Export de Salud | Una vez, para el histórico | Se sube `export.xml` y se parsea en el navegador |
+| Manual | Cuando falla lo demás | Formulario en el módulo, sin fases |
+
+Detalles que importan:
+
+- Una noche se guarda con la fecha de la **mañana en que te despertaste**. Si se guardara la fecha
+  de acostarse, toda noche que cruza medianoche quedaría partida en dos.
+- El corte entre una noche y la siguiente es el **mediodía**, igual que usa el propio Watch.
+- El `export.xml` pesa cientos de MB porque trae todo el historial de salud. Se lee **por chunks de
+  4 MB** y se extraen sólo los registros `HKCategoryTypeIdentifierSleepAnalysis`: nunca entra
+  entero en memoria, y el resto de los datos de salud ni se toca.
+- Cada noche llega partida en decenas de segmentos (uno por cambio de fase); se agrupan y suman.
+- Noches con menos de 30 minutos dormidos se descartan: son siestas o ruido del sensor.
 
 ### Secciones de objetivos
 

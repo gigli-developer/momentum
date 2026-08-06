@@ -149,6 +149,42 @@ export interface JournalEntry {
   closedAt: string | null
 }
 
+/* ------------------------------------------------------------------ Sueño
+   Los datos vienen del Apple Watch. Una app web no puede leer HealthKit, así
+   que entran por el Atajo de iOS (diario) o por el export XML de Salud
+   (histórico). También se pueden cargar a mano. */
+
+export type SleepSource = 'shortcut' | 'import' | 'manual'
+
+export interface SleepStages {
+  /** Minutos despierto durante la noche. No cuentan como dormido. */
+  awake: number
+  rem: number
+  /** "Core" en Apple Health; el sueño ligero. */
+  core: number
+  deep: number
+  /** Minutos dormidos sin fase identificada (registros viejos o de iPhone). */
+  unspecified: number
+}
+
+export interface SleepNight {
+  /**
+   * Fecha de la MAÑANA en que te despertaste: una noche pertenece al día que
+   * amanece, si no las noches que cruzan medianoche se parten en dos.
+   */
+  date: ISODate
+  /** Timestamps ISO. */
+  bedtime: string
+  wakeTime: string
+  /** Minutos efectivamente dormidos (no incluye `stages.awake`). */
+  asleepMinutes: number
+  /** Minutos entre acostarse y levantarse. */
+  inBedMinutes: number
+  stages: SleepStages
+  source: SleepSource
+  updatedAt: string
+}
+
 /* -------------------------------------------------------------- Memento */
 
 export interface Profile {
@@ -157,6 +193,8 @@ export interface Profile {
   birthDate: ISODate | ''
   /** Expectativa de vida en años. */
   lifeExpectancy: number
+  /** Objetivo de sueño en minutos. Por defecto 8 h. */
+  sleepTargetMinutes: number
 }
 
 /* ---------------------------------------------------------- Estado global */
@@ -175,4 +213,5 @@ export interface AppData {
   goals: Goal[]
   lifeAreas: LifeArea[]
   wheel: Record<ISOMonth, WheelEntry>
+  sleep: Record<ISODate, SleepNight>
 }

@@ -17,6 +17,7 @@ import type {
   Profile,
   Quarter,
   RitualEntry,
+  SleepNight,
   Task,
 } from './types'
 import { MAX_LIFE_AREAS, MIN_GOAL_CATEGORIES, MIN_LIFE_AREAS } from './types'
@@ -63,6 +64,11 @@ interface Actions {
   updateGoal: (id: ID, patch: Partial<Omit<Goal, 'id'>>) => void
   toggleGoal: (id: ID) => void
   removeGoal: (id: ID) => void
+
+  /* Sueño */
+  upsertSleepNight: (night: SleepNight) => void
+  importSleepNights: (nights: SleepNight[]) => void
+  removeSleepNight: (date: ISODate) => void
 
   /* Rueda de la vida */
   setWheelScore: (month: ISOMonth, areaId: ID, value: number) => void
@@ -350,6 +356,22 @@ export const useStore = create<Store>()(
 
       removeGoal: (id) => set((s) => ({ goals: s.goals.filter((g) => g.id !== id) })),
 
+      /* ---------------------------------------------------------- Sueño */
+      upsertSleepNight: (night) =>
+        set((s) => ({ sleep: { ...s.sleep, [night.date]: night } })),
+
+      // El import pisa lo que ya había para esas fechas: el export de Salud es
+      // más confiable que una carga manual vieja.
+      importSleepNights: (nights) =>
+        set((s) => ({
+          sleep: { ...s.sleep, ...Object.fromEntries(nights.map((n) => [n.date, n])) },
+        })),
+
+      removeSleepNight: (date) =>
+        set((s) => ({
+          sleep: Object.fromEntries(Object.entries(s.sleep).filter(([key]) => key !== date)),
+        })),
+
       /* ------------------------------------------------ Rueda de la vida */
       setWheelScore: (month, areaId, value) =>
         set((s) => {
@@ -413,7 +435,7 @@ export const useStore = create<Store>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 4,
+      version: 5,
       storage: createJSONStorage(() => appStorage),
       // Sin migración, quien ya venía usando la app se queda sin áreas (la rueda
       // revienta) o sin la clave del journal.
@@ -451,6 +473,14 @@ export const useStore = create<Store>()(
           }
           delete data.dreams
         }
+        // v4 → v5: aparece el módulo de sueño.
+        if (version < 5) {
+          if (typeof data.sleep !== 'object' || data.sleep === null) data.sleep = {}
+          const profile = data.profile as Record<string, unknown> | undefined
+          if (profile && typeof profile.sleepTargetMinutes !== 'number') {
+            profile.sleepTargetMinutes = 480
+          }
+        }
         return data as unknown as AppData
       },
       // Sólo persistimos datos: las acciones se reconstruyen en cada arranque.
@@ -468,6 +498,7 @@ export const useStore = create<Store>()(
         goals: s.goals,
         lifeAreas: s.lifeAreas,
         wheel: s.wheel,
+        sleep: s.sleep,
       }),
     },
   ),
@@ -506,5 +537,6 @@ export function snapshot(s: Store): AppData {
     goals: s.goals,
     lifeAreas: s.lifeAreas,
     wheel: s.wheel,
+    sleep: s.sleep,
   }
 }

@@ -3,6 +3,7 @@ import {
   CalendarDays,
   CircleCheckBig,
   Hourglass,
+  Moon,
   NotebookPen,
   PieChart,
   Settings,
@@ -49,6 +50,13 @@ export const MODULES: ModuleDef[] = [
     title: 'Journal',
     description: 'Cerrá el día: tildá lo que cumpliste y grabate leyendo tu journal.',
     Icon: NotebookPen,
+  },
+  {
+    id: 'sueno',
+    path: '/sueno',
+    title: 'Sueño',
+    description: 'Lo que mide tu Apple Watch cada noche, cruzado con tu energía.',
+    Icon: Moon,
   },
   {
     id: 'objetivos',
