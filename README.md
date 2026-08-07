@@ -44,9 +44,13 @@ vías, todas convergiendo en `SleepNight`:
 
 | Vía | Cuándo | Cómo |
 | --- | --- | --- |
-| Atajo de iOS | Cada mañana, automático | POST a la Edge Function `ingest-sleep` — ver [docs/atajo-sueno-ios.md](../docs/atajo-sueno-ios.md) |
+| Health Auto Export | Cada mañana, automático | App paga que postea sola — ver [docs/health-auto-export.md](docs/health-auto-export.md) |
+| Atajo de iOS | Cada mañana, automático | Alternativa gratis — ver [docs/atajo-sueno-ios.md](docs/atajo-sueno-ios.md) |
 | Export de Salud | Una vez, para el histórico | Se sube `export.xml` y se parsea en el navegador |
 | Manual | Cuando falla lo demás | Formulario en el módulo, sin fases |
+
+Las dos primeras pegan contra la **misma URL** (`ingest-sleep`): la función detecta el formato por
+la forma del payload, así que no hay nada que configurar distinto según cuál uses.
 
 Detalles que importan:
 
