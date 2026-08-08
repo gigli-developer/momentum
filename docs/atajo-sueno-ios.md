@@ -17,23 +17,23 @@ configura una sola vez y después corre solo.
 
 Necesitás dos cosas:
 
-1. **La URL de la función**, que va a ser
-   `https://TU_PROJECT_REF.supabase.co/functions/v1/ingest-sleep`
-2. **Un token de ingesta.** Todavía no existe la pantalla para generarlo en Momentum, así que por
-   ahora se crea a mano desde el SQL Editor de Supabase:
+1. **La URL de la función**, que ya está desplegada:
+   `https://bktawrshipxodfpacjoa.supabase.co/functions/v1/ingest-sleep`
+2. **Un token de ingesta.** Todavía no existe la pantalla para generarlo en Momentum, así que se
+   crea desde el SQL Editor de Supabase, **estando logueado con tu usuario**:
 
 ```sql
--- Cambiá 'un-token-largo-y-random' por algo tuyo, largo e impredecible.
-insert into public.ingest_tokens (user_id, token_hash, label)
-values (
-  auth.uid(),
-  encode(digest('un-token-largo-y-random', 'sha256'), 'hex'),
-  'Atajo de iOS'
-);
+select public.create_ingest_token('Atajo de iOS');
 ```
 
-Guardá el token en claro en tu gestor de contraseñas: en la base sólo queda el hash y no se puede
-recuperar.
+Devuelve un token de 64 caracteres. **Guardalo en tu gestor de contraseñas ahora**: en la base sólo
+queda el sha256 y no hay forma de recuperarlo después.
+
+Para revocarlo:
+
+```sql
+update public.ingest_tokens set revoked_at = now() where label = 'Atajo de iOS';
+```
 
 Y obviamente: tenés que haber dormido con el Watch, con **Seguimiento del Sueño** activado.
 

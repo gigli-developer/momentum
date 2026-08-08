@@ -3,6 +3,20 @@
 Esquema para Supabase. **Supabase es la fuente única de verdad**: la app deja de usar
 localStorage y pasa a leer y escribir contra la base, con login obligatorio.
 
+> ## ✅ Aplicado
+>
+> | | |
+> | --- | --- |
+> | Proyecto | **Momentum** |
+> | Ref | `bktawrshipxodfpacjoa` |
+> | URL | `https://bktawrshipxodfpacjoa.supabase.co` |
+> | Región | us-east-2 |
+> | Tablas | 21, todas con RLS |
+> | Bucket | `journal-audio` (privado) |
+> | Edge Function | `ingest-sleep` — activa, probada |
+>
+> Las credenciales del cliente están en `.env.local` (ignorado por git).
+
 ## Qué hay acá
 
 | Archivo | Qué hace |
@@ -12,6 +26,9 @@ localStorage y pasa a leer y escribir contra la base, con login obligatorio.
 | `20260804120200_storage.sql` | Bucket privado `journal-audio` y sus políticas |
 | `20260804120300_defaults_on_signup.sql` | Secciones y áreas por defecto + guardas de mínimos |
 | `20260804130000_sleep.sql` | Noches de sueño y tokens de ingesta para el Atajo de iOS |
+| `20260807100000_wheel_sources.sql` | Origen del puntaje de cada área de la rueda |
+| `20260807110000_google_tasks.sql` | Cuenta de Google, mapeo de tareas y cola de tildados |
+| `20260807120000_harden_and_token_helper.sql` | Correcciones del linter + `create_ingest_token()` |
 
 Se aplican **en ese orden**.
 
