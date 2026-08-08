@@ -83,6 +83,29 @@ El módulo **no reemplaza el cuaderno**, lo acompaña. El ciclo diario es:
 Por eso no hay campo de texto para el journal: el texto vive en papel. Lo que la app guarda es el
 audio de la lectura y el registro de cumplimiento.
 
+### Rueda de la vida: manual y automática
+
+Cada área declara **de dónde sale su puntaje** (`LifeArea.source`):
+
+| Fuente | Cómo se calcula |
+| --- | --- |
+| `manual` | El slider. Es el default |
+| `habits` | Marcas logradas / posibles de los hábitos elegidos, en el mes |
+| `sleep` | Noches que llegaron al objetivo / noches con dato |
+| `tasks` | Tareas completadas / totales del mes |
+| `goals` | Objetivos cumplidos / totales del trimestre |
+| `energy` | Energía promedio del ritual, estirada de 1-5 a 0-10 |
+
+Reglas que importan:
+
+- **Lo automático no se guarda.** Se recalcula en cada render desde los datos crudos, así que
+  corregir un hábito de hace tres meses actualiza la rueda de ese mes sin migraciones.
+- Si una fuente **no tiene datos**, devuelve `null` y el área cae al valor manual. Mostrar 0 sería
+  mentir: no es que estés mal en salud, es que no hay con qué medirlo.
+- Sólo se cuentan los **días del mes que ya pasaron**: no se penaliza por el futuro.
+- Las áreas que dependen de cómo te sentís —familia, ocio, tiempo propio— **no se pueden derivar de
+  ningún dato** y quedan manuales a propósito.
+
 ### Áreas de la rueda
 
 Las áreas de la rueda de la vida **no están fijas en el código**: son datos del usuario

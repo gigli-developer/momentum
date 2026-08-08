@@ -19,6 +19,7 @@ import type {
   RitualEntry,
   SleepNight,
   Task,
+  WheelSource,
 } from './types'
 import { MAX_LIFE_AREAS, MIN_GOAL_CATEGORIES, MIN_LIFE_AREAS } from './types'
 
@@ -74,6 +75,7 @@ interface Actions {
   setWheelScore: (month: ISOMonth, areaId: ID, value: number) => void
   addLifeArea: (label: string) => void
   renameLifeArea: (id: ID, label: string) => void
+  setLifeAreaSource: (id: ID, source: WheelSource) => void
   removeLifeArea: (id: ID) => void
 
   /* Datos */
@@ -387,7 +389,12 @@ export const useStore = create<Store>()(
       addLifeArea: (label) =>
         set((s) => {
           if (s.lifeAreas.length >= MAX_LIFE_AREAS) return s
-          const area: LifeArea = { id: newId(), label, order: s.lifeAreas.length }
+          const area: LifeArea = {
+            id: newId(),
+            label,
+            order: s.lifeAreas.length,
+            source: { kind: 'manual', habitIds: [] },
+          }
           // El área nueva arranca en 5 en todos los meses ya puntuados, para que
           // el polígono no se hunda hacia el centro de golpe.
           const wheel = Object.fromEntries(
@@ -402,6 +409,11 @@ export const useStore = create<Store>()(
       renameLifeArea: (id, label) =>
         set((s) => ({
           lifeAreas: s.lifeAreas.map((a) => (a.id === id ? { ...a, label } : a)),
+        })),
+
+      setLifeAreaSource: (id, source) =>
+        set((s) => ({
+          lifeAreas: s.lifeAreas.map((a) => (a.id === id ? { ...a, source } : a)),
         })),
 
       removeLifeArea: (id) =>
@@ -435,7 +447,7 @@ export const useStore = create<Store>()(
     }),
     {
       name: STORAGE_KEY,
-      version: 5,
+      version: 6,
       storage: createJSONStorage(() => appStorage),
       // Sin migración, quien ya venía usando la app se queda sin áreas (la rueda
       // revienta) o sin la clave del journal.
@@ -479,6 +491,17 @@ export const useStore = create<Store>()(
           const profile = data.profile as Record<string, unknown> | undefined
           if (profile && typeof profile.sleepTargetMinutes !== 'number') {
             profile.sleepTargetMinutes = 480
+          }
+        }
+        // v5 → v6: cada área de la rueda declara de dónde sale su puntaje.
+        // Las existentes quedan en manual: cambiar en silencio cómo se calcula
+        // un dato que el usuario ya cargó sería peor que no automatizar nada.
+        if (version < 6) {
+          if (Array.isArray(data.lifeAreas)) {
+            data.lifeAreas = (data.lifeAreas as Array<Record<string, unknown>>).map((area) => ({
+              source: { kind: 'manual', habitIds: [] },
+              ...area,
+            }))
           }
         }
         return data as unknown as AppData

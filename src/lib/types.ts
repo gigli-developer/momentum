@@ -109,10 +109,38 @@ export interface Goal {
  * Las áreas las define el usuario: puede agregar, renombrar y eliminar.
  * El radar se dibuja con tantos ejes como áreas haya.
  */
+/**
+ * De dónde sale el puntaje de un área.
+ *
+ * `manual` es el default y guarda el número que movés con el slider. El resto
+ * se calcula al vuelo desde los otros módulos: no se guarda nada derivado, así
+ * que si corregís un hábito de hace tres meses, la rueda de ese mes se
+ * recalcula sola.
+ */
+export type WheelSourceKind =
+  | 'manual'
+  /** Cumplimiento promedio de los hábitos elegidos, en el mes. */
+  | 'habits'
+  /** Porcentaje de noches que llegaron al objetivo de sueño. */
+  | 'sleep'
+  /** Porcentaje de tareas completadas del mes. */
+  | 'tasks'
+  /** Porcentaje de objetivos cumplidos del trimestre. */
+  | 'goals'
+  /** Promedio del nivel de energía cargado en el ritual matutino. */
+  | 'energy'
+
+export interface WheelSource {
+  kind: WheelSourceKind
+  /** Sólo para `habits`: qué hábitos alimentan esta área. */
+  habitIds: ID[]
+}
+
 export interface LifeArea {
   id: ID
   label: string
   order: number
+  source: WheelSource
 }
 
 /** Menos de 3 ejes no forman un polígono; más de 10 no se lee. */

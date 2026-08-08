@@ -27,15 +27,34 @@ export function defaultGoalCategories(): GoalCategory[] {
  * las suyas; estos ids se mantienen estables porque son los que traía la v1.
  */
 export function defaultLifeAreas(): LifeArea[] {
+  const manual = { kind: 'manual' as const, habitIds: [] }
   return [
-    { id: 'salud', label: 'Salud y deporte', order: 0 },
-    { id: 'familia', label: 'Familia y amor', order: 1 },
-    { id: 'trabajo', label: 'Trabajo y finanzas', order: 2 },
-    { id: 'ocio', label: 'Ocio y amistad', order: 3 },
-    { id: 'tiempo', label: 'Tiempo para mí', order: 4 },
-    { id: 'emocional', label: 'Emocional', order: 5 },
-    { id: 'educativa', label: 'Educativa y cultural', order: 6 },
-    { id: 'espiritual', label: 'Espiritual y ética', order: 7 },
+    // Las áreas que tienen datos detrás arrancan automáticas; las que dependen
+    // de cómo te sentís (familia, ocio, tiempo propio) no se pueden derivar de
+    // nada y quedan manuales a propósito.
+    {
+      id: 'salud',
+      label: 'Salud y deporte',
+      order: 0,
+      source: { kind: 'habits', habitIds: ['habit-2', 'habit-0'] },
+    },
+    { id: 'familia', label: 'Familia y amor', order: 1, source: manual },
+    { id: 'trabajo', label: 'Trabajo y finanzas', order: 2, source: { kind: 'tasks', habitIds: [] } },
+    { id: 'ocio', label: 'Ocio y amistad', order: 3, source: manual },
+    { id: 'tiempo', label: 'Tiempo para mí', order: 4, source: manual },
+    { id: 'emocional', label: 'Emocional', order: 5, source: { kind: 'energy', habitIds: [] } },
+    {
+      id: 'educativa',
+      label: 'Educativa y cultural',
+      order: 6,
+      source: { kind: 'habits', habitIds: ['habit-3'] },
+    },
+    {
+      id: 'espiritual',
+      label: 'Espiritual y ética',
+      order: 7,
+      source: { kind: 'habits', habitIds: ['habit-1'] },
+    },
   ]
 }
 
