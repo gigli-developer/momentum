@@ -1,9 +1,66 @@
 import { useEffect, useState } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
-import { Menu, X, Zap } from 'lucide-react'
+import { Cloud, CloudOff, LogOut, Menu, X, Zap } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import { MODULES } from '@/modules/registry'
 import { IconButton } from '@/components/ui/Button'
+import { useSyncStatus } from '@/lib/remote/connect'
+import { signOut, useSession } from '@/lib/session'
+import { isRemoteConfigured } from '@/lib/supabase'
+
+/** Pie de la barra lateral: dónde se están guardando los datos y de quién son. */
+function SyncFooter() {
+  const status = useSyncStatus()
+  const session = useSession()
+
+  if (!isRemoteConfigured) {
+    return (
+      <p className="px-3 text-[11px] leading-relaxed text-ink-faint">
+        Sin conexión a Supabase: los datos se guardan sólo en este navegador.
+      </p>
+    )
+  }
+
+  return (
+    <div className="px-3">
+      <div className="flex items-center gap-2 text-[11px]">
+        {status.state === 'error' ? (
+          <>
+            <CloudOff className="size-3.5 shrink-0 text-negative" />
+            <span className="text-negative">Sin guardar</span>
+          </>
+        ) : (
+          <>
+            <Cloud
+              className={cn(
+                'size-3.5 shrink-0',
+                status.state === 'saving' ? 'text-accent' : 'text-ink-faint',
+              )}
+            />
+            <span className="text-ink-faint">
+              {status.state === 'saving' ? 'Guardando…' : 'Todo guardado'}
+            </span>
+          </>
+        )}
+      </div>
+
+      {status.state === 'error' && status.message ? (
+        <p className="mt-1 text-[11px] leading-snug text-negative/80">{status.message}</p>
+      ) : null}
+
+      {session.status === 'signed-in' ? (
+        <button
+          type="button"
+          onClick={() => void signOut()}
+          className="mt-2 flex items-center gap-1.5 text-[11px] text-ink-faint transition-colors hover:text-ink"
+        >
+          <LogOut className="size-3" />
+          <span className="truncate">{session.email}</span>
+        </button>
+      ) : null}
+    </div>
+  )
+}
 
 function NavItems({ onNavigate }: { onNavigate?: () => void }) {
   return (
@@ -56,9 +113,7 @@ export function AppShell({ children }: { children: React.ReactNode }) {
         <div className="min-h-0 flex-1 overflow-y-auto">
           <NavItems />
         </div>
-        <p className="px-3 text-[11px] leading-relaxed text-ink-faint">
-          Tus datos se guardan sólo en este navegador.
-        </p>
+        <SyncFooter />
       </aside>
 
       {/* Barra superior en mobile */}

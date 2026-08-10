@@ -168,6 +168,30 @@ design-system/    Previews HTML del design system, sincronizadas con Claude Desi
 supabase/         Migraciones SQL del esquema. Ver supabase/README.md.
 ```
 
+### Cómo se conecta con Supabase
+
+La app **no** hace una llamada por acción. El store de zustand sigue siendo síncrono y hace de
+caché en memoria; Supabase es la fuente de verdad.
+
+```
+Iniciar sesión ──► loadAll()  ──► hydrate del store  ──► la UI pinta
+Cada cambio    ──► store (instantáneo)  ──► debounce 500ms  ──► diff  ──► push
+```
+
+- **`src/lib/remote/load.ts`** trae todo de una. Los datos de una persona son chicos, así que
+  paginar costaría más complejidad de la que ahorra.
+- **`src/lib/remote/sync.ts`** compara el estado anterior con el nuevo y deduce qué cambió. Se hace
+  por diferencias y no llamando a Supabase desde cada acción porque son ~25 acciones: **olvidarse
+  una sola significaría un dato que nunca se guarda**. Si está en `AppData`, entra en el diff.
+- El estado confirmado se marca **antes** del `await`: si entra otro cambio mientras se escribe, su
+  diff parte de ahí y no reenvía lo que ya va en camino. Si falla, la marca vuelve atrás y el
+  siguiente intento reintenta lo perdido.
+- Las escrituras se encadenan, nunca en paralelo, para que dos ráfagas seguidas no se pisen.
+- Las tareas padre se escriben antes que las subtareas: si no, la foreign key rechaza la subtarea.
+- Al cerrar la pestaña con cambios pendientes, se fuerza el guardado.
+
+Sin `.env.local`, la app arranca igual contra localStorage y lo dice en la barra lateral.
+
 ### Persistencia
 
 Todo el estado se guarda bajo la clave `momentum:v1` en `localStorage`, serializado por el

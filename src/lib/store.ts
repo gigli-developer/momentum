@@ -3,6 +3,7 @@ import { createJSONStorage, persist } from 'zustand/middleware'
 import { monthKey, todayISO, weekStartISO } from './date'
 import { buildEmpty, buildSeed, defaultGoalCategories, defaultLifeAreas } from './seed'
 import { STORAGE_KEY, appStorage, newId } from './storage'
+import { isRemoteConfigured } from './supabase'
 import type {
   AppData,
   Goal,
@@ -95,10 +96,17 @@ function emptyJournalEntry(date: ISODate): JournalEntry {
   return { date, recordings: [], closedAt: null }
 }
 
+/**
+ * Con Supabase configurado la app arranca vacía y se hidrata al iniciar sesión.
+ * Sembrar datos de ejemplo ahí haría que se vean hábitos falsos por un instante
+ * antes de que lleguen los reales, y peor: el sincronizador los subiría.
+ */
+const initialData = isRemoteConfigured ? buildEmpty() : buildSeed()
+
 export const useStore = create<Store>()(
   persist(
     (set, get) => ({
-      ...buildSeed(),
+      ...initialData,
 
       /* --------------------------------------------------------- Perfil */
       updateProfile: (patch) => set((s) => ({ profile: { ...s.profile, ...patch } })),

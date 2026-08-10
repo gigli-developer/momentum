@@ -29,6 +29,8 @@ localStorage y pasa a leer y escribir contra la base, con login obligatorio.
 | `20260807100000_wheel_sources.sql` | Origen del puntaje de cada área de la rueda |
 | `20260807110000_google_tasks.sql` | Cuenta de Google, mapeo de tareas y cola de tildados |
 | `20260807120000_harden_and_token_helper.sql` | Correcciones del linter + `create_ingest_token()` |
+| `20260809100000_profile_sleep_target.sql` | Objetivo de sueño en el perfil |
+| `20260809110000_fix_min_guards_on_cascade.sql` | Arreglo: no se podía borrar una cuenta |
 
 Se aplican **en ese orden**.
 
