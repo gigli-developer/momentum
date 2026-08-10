@@ -10,6 +10,7 @@ import { downloadBackup } from '@/lib/storage'
 import { clearBlobs, estimateUsage, formatBytes, type StorageUsage } from '@/lib/media'
 import { journalAudioBytes, journalRecordingCount } from '@/lib/stats'
 import { snapshot, useStore } from '@/lib/store'
+import { GoogleConnect } from './GoogleConnect'
 import type { AppData } from '@/lib/types'
 
 const PILLAR_EMOJI = ['🎯', '💪', '🤝', '🧠', '🌱', '💰']
@@ -165,6 +166,10 @@ export function SettingsPage() {
             placeholder="Nuevo proyecto"
             onAdd={(name) => addProject({ name, emoji: '📁' })}
           />
+        </Card>
+
+        <Card>
+          <GoogleConnect />
         </Card>
 
         <Card>
