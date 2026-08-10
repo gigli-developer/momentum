@@ -78,7 +78,30 @@ export async function accessTokenFor(
   return payload.access_token as string
 }
 
-export const JSON_HEADERS = { 'content-type': 'application/json' }
+/**
+ * Cabeceras CORS.
+ *
+ * Sin esto el navegador ni siquiera manda el request: el preflight OPTIONS
+ * falla y todo lo demás es invisible. Hace falta en cualquier función que se
+ * llame desde el cliente.
+ *
+ * `apikey` y `x-client-info` van en la lista porque el SDK de Supabase las
+ * agrega solo; si no están permitidas, el preflight se rechaza igual.
+ */
+export const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Headers':
+    'authorization, x-client-info, apikey, content-type, x-ingest-token',
+  'Access-Control-Allow-Methods': 'POST, GET, OPTIONS',
+}
+
+export const JSON_HEADERS = { ...CORS_HEADERS, 'content-type': 'application/json' }
+
+/** Responde el preflight. Devuelve `null` si el request no es OPTIONS. */
+export function preflight(request: Request): Response | null {
+  if (request.method !== 'OPTIONS') return null
+  return new Response(null, { status: 204, headers: CORS_HEADERS })
+}
 
 export function jsonResponse(body: unknown, status = 200): Response {
   return new Response(JSON.stringify(body), { status, headers: JSON_HEADERS })

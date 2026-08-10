@@ -17,6 +17,8 @@ import { PageHeader } from '@/components/layout/AppShell'
 import { Card, Panel, SectionTitle } from '@/components/ui/Card'
 import { Button, IconButton } from '@/components/ui/Button'
 import { DayTaskList } from '@/components/tasks/DayTaskList'
+import { DayEvents } from '@/components/calendar/DayEvents'
+import { useCalendarEvents } from '@/lib/google/calendar'
 import { ProgressBar } from '@/components/ui/Progress'
 import { cn } from '@/lib/cn'
 import { capitalize, fmt, isFuture, toISO, todayISO } from '@/lib/date'
@@ -42,6 +44,7 @@ export function JournalPage() {
   const recordings = entry?.recordings ?? []
 
   const dayTasks = useMemo(() => tasks.filter((t) => t.date === date), [tasks, date])
+  const { state: calendar } = useCalendarEvents(date, date)
 
   const done = dayTasks.filter((t) => t.done).length
   const pct = dayTasks.length === 0 ? 0 : Math.round((done / dayTasks.length) * 100)
@@ -110,6 +113,10 @@ export function JournalPage() {
             </p>
 
             {dayTasks.length > 0 ? <ProgressBar className="mt-3" value={pct} /> : null}
+
+            <div className="mt-4">
+              <DayEvents date={date} state={calendar} variant="full" />
+            </div>
 
             <div className="mt-3">
               <DayTaskList date={date} emptyLabel="No había tareas anotadas para este día." />

@@ -4,6 +4,7 @@ import { cn } from '@/lib/cn'
 import { useStore } from '@/lib/store'
 import type { ID, ISODate, Task } from '@/lib/types'
 import { TaskRow } from './TaskRow'
+import { BlockTimeModal } from '@/components/calendar/BlockTimeModal'
 
 interface Branch {
   parent: Task
@@ -101,6 +102,7 @@ export function DayTaskList({
 
   const [showCompleted, setShowCompleted] = useState(false)
   const [addingSubtaskTo, setAddingSubtaskTo] = useState<ID | null>(null)
+  const [blocking, setBlocking] = useState<Task | null>(null)
 
   const branches = useMemo(() => buildBranches(tasks, date), [tasks, date])
   const pending = branches.filter((b) => !b.parent.done)
@@ -117,6 +119,7 @@ export function DayTaskList({
             onToggle={() => toggleTask(branch.parent.id)}
             onStar={editable ? () => toggleTaskStar(branch.parent.id) : undefined}
             onAddSubtask={editable ? () => setAddingSubtaskTo(branch.parent.id) : undefined}
+            onBlockTime={editable ? () => setBlocking(branch.parent) : undefined}
             onDelete={() => removeTask(branch.parent.id)}
             onUpdate={(patch) => updateTask(branch.parent.id, patch)}
           />
@@ -128,6 +131,7 @@ export function DayTaskList({
               editable={editable}
               onToggle={() => toggleTask(child.id)}
               onStar={editable ? () => toggleTaskStar(child.id) : undefined}
+              onBlockTime={editable ? () => setBlocking(child) : undefined}
               onDelete={() => removeTask(child.id)}
               onUpdate={(patch) => updateTask(child.id, patch)}
             />
@@ -177,6 +181,8 @@ export function DayTaskList({
           {showCompleted ? <div className="mt-0.5">{completed.map(renderBranch)}</div> : null}
         </div>
       ) : null}
+
+      <BlockTimeModal task={blocking} onClose={() => setBlocking(null)} />
     </div>
   )
 }

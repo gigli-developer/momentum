@@ -10,11 +10,20 @@
  * Deploy: supabase functions deploy google-oauth-start
  */
 
-import { GOOGLE_SCOPES, getSecret, jsonResponse, serviceClient } from '../_shared/google.ts'
+import {
+  GOOGLE_SCOPES,
+  getSecret,
+  jsonResponse,
+  preflight,
+  serviceClient,
+} from '../_shared/google.ts'
 
 const AUTH_ENDPOINT = 'https://accounts.google.com/o/oauth2/v2/auth'
 
 Deno.serve(async (request) => {
+  const options = preflight(request)
+  if (options) return options
+
   if (request.method !== 'POST') return jsonResponse({ error: 'Usá POST' }, 405)
 
   const authHeader = request.headers.get('Authorization')

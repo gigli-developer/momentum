@@ -6,6 +6,8 @@ import { Card, SectionTitle } from '@/components/ui/Card'
 import { Button, IconButton } from '@/components/ui/Button'
 import { Input } from '@/components/ui/Input'
 import { DayTaskList } from '@/components/tasks/DayTaskList'
+import { DayEvents } from '@/components/calendar/DayEvents'
+import { useCalendarEvents } from '@/lib/google/calendar'
 import { cn } from '@/lib/cn'
 import {
   WEEKDAY_INITIALS,
@@ -27,6 +29,7 @@ export function PlannerPage() {
   const claimReward = useStore((s) => s.claimReward)
 
   const days = useMemo(() => weekDays(cursor), [cursor])
+  const { state: calendar } = useCalendarEvents(toISO(days[0]), toISO(days[6]))
   const start = weekStartISO(cursor)
   const reward = rewards[start] ?? { weekStart: start, text: '', claimed: false }
   const today = todayISO()
@@ -122,6 +125,7 @@ export function PlannerPage() {
                   <span className="text-xs text-ink-faint tabular-nums">{fmt(day, 'd MMM')}</span>
                 </header>
 
+                <DayEvents date={iso} state={calendar} />
                 <DayTaskList date={iso} />
               </section>
             )

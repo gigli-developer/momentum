@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react'
-import { Check, CornerDownRight, Star, Trash2 } from 'lucide-react'
+import { CalendarPlus, Check, CornerDownRight, Star, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/cn'
 import type { Task } from '@/lib/types'
 
@@ -8,6 +8,7 @@ interface TaskRowProps {
   onToggle: () => void
   onStar?: () => void
   onAddSubtask?: () => void
+  onBlockTime?: () => void
   onDelete: () => void
   onUpdate?: (patch: Partial<Task>) => void
   /** Las subtareas van indentadas y con un checkbox más chico. */
@@ -21,6 +22,7 @@ export function TaskRow({
   onToggle,
   onStar,
   onAddSubtask,
+  onBlockTime,
   onDelete,
   onUpdate,
   isSubtask,
@@ -127,6 +129,18 @@ export function TaskRow({
                 className="grid size-6 place-items-center rounded-[6px] text-ink-faint opacity-0 transition hover:bg-surface-3 hover:text-ink focus-visible:opacity-100 group-hover/task:opacity-100"
               >
                 <CornerDownRight className="size-3.5" />
+              </button>
+            ) : null}
+
+            {onBlockTime && !task.done ? (
+              <button
+                type="button"
+                aria-label={`Bloquear tiempo para ${task.title}`}
+                title="Bloquear tiempo en el calendario"
+                onClick={onBlockTime}
+                className="grid size-6 place-items-center rounded-[6px] text-ink-faint opacity-0 transition hover:bg-surface-3 hover:text-ink focus-visible:opacity-100 group-hover/task:opacity-100"
+              >
+                <CalendarPlus className="size-3.5" />
               </button>
             ) : null}
 
