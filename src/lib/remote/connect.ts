@@ -27,8 +27,29 @@ const DEBOUNCE_MS = 500
  *
  * Devuelve una función para desconectar (al cerrar sesión).
  */
+/**
+ * Postgres rechaza un token cuyo `iat` esté adelantado respecto de su reloj,
+ * aunque sea por un par de segundos. Pasa seguido entre una máquina de
+ * escritorio y el servidor, y se arregla solo esperando: el token no cambia,
+ * el reloj del servidor avanza.
+ */
+function isClockSkew(error: unknown): boolean {
+  const message = error instanceof Error ? error.message.toLowerCase() : ''
+  return message.includes('issued at future') || message.includes('jwt') && message.includes('future')
+}
+
+async function loadWithRetry(userId: string): Promise<AppData> {
+  try {
+    return await loadAll(userId)
+  } catch (cause) {
+    if (!isClockSkew(cause)) throw cause
+    await new Promise((resolve) => setTimeout(resolve, 2500))
+    return loadAll(userId)
+  }
+}
+
 export async function connectStore(userId: string): Promise<() => void> {
-  const loaded = await loadAll(userId)
+  const loaded = await loadWithRetry(userId)
   useStore.getState().replaceAll(loaded)
 
   // Referencia de lo que ya está en la base. Todo diff se calcula contra esto.
