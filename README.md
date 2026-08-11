@@ -254,11 +254,42 @@ Con una cuenta real, siguiendo cada dato hasta Postgres:
 
 - **Grabar audio con micrófono real.** El camino de subida y reproducción sí se verificó inyectando
   un audio, pero `MediaRecorder` nunca corrió contra un micrófono de verdad.
-- **La conexión con Google.** El OAuth está desplegado y responde bien a los casos de error, pero
-  nadie completó el consentimiento todavía, así que no hay refresh token y Calendar nunca devolvió
-  eventos reales.
+- **La conexión con Google.** Ver el detalle abajo: falta un paso y sin él nada de Calendar
+  funciona.
 - **El Atajo de iOS / Health Auto Export.** La función `ingest-sleep` está viva y valida tokens,
   pero nunca recibió un payload real de un teléfono.
+
+## ⚠️ Google: falta el último paso
+
+El lado de **Google Cloud ya está hecho**: el proyecto existe, las APIs de Tasks y Calendar están
+habilitadas, el cliente OAuth está creado con su redirect, y la pantalla de consentimiento está
+publicada **"En producción"** (lo último importa: en modo "Prueba" Google vence el refresh token
+cada 7 días).
+
+Lo que **falta** es el consentimiento del lado de la app. Hasta que eso pase:
+
+- La tabla `google_accounts` está vacía → no hay refresh token
+- `google-calendar` devuelve `409 no_conectado` en cada llamada
+- Los eventos no aparecen en el planificador ni en el journal, y "Bloquear tiempo" falla
+- La app **no se rompe**: el módulo de eventos simplemente no se muestra
+
+### Cómo completarlo
+
+**Ajustes → Conectar Google** → elegir la cuenta → *Configuración avanzada → Ir a Momentum* →
+Permitir.
+
+Google va a advertir que la app no está verificada. Es esperable y no hace falta verificarla: ese
+trámite existe para apps con usuarios desconocidos, y esta corre en la cuenta de su propio dueño.
+
+### Cómo confirmar que quedó
+
+```sql
+select (refresh_token is not null) as conectado, connected_at, last_error
+from public.google_accounts;
+```
+
+Una fila con `conectado = true` significa que está listo. Si la tabla sigue vacía, el flujo se cortó
+antes de terminar; el motivo llega como parámetro a `/ajustes` y la app lo muestra traducido.
 
 ## Qué sigue
 
