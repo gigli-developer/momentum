@@ -197,6 +197,7 @@ export function rowToRecording(row: Row): JournalRecording {
     durationMs: Number(row.duration_ms ?? 0),
     mimeType: text(row.mime_type),
     size: Number(row.size_bytes ?? 0),
+    storagePath: text(row.storage_path) || undefined,
   }
 }
 

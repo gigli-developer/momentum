@@ -168,6 +168,11 @@ export interface JournalRecording {
   mimeType: string
   /** Bytes, para poder mostrar cuánto ocupa el journal sin abrir cada blob. */
   size: number
+  /**
+   * Ruta en Supabase Storage. Ausente = el audio vive en IndexedDB, que es el
+   * modo local cuando no hay proyecto configurado.
+   */
+  storagePath?: string
 }
 
 export interface JournalEntry {

@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Download, Mic, Trash2, TriangleAlert } from 'lucide-react'
 import { IconButton } from '@/components/ui/Button'
 import { formatBytes, formatDuration, getBlob } from '@/lib/media'
+import { signedUrlFor } from '@/lib/remote/audio'
 import { fmt } from '@/lib/date'
 import type { JournalRecording } from '@/lib/types'
 
@@ -20,26 +21,32 @@ export function RecordingItem({ recording, date, index, onDelete }: RecordingIte
     let objectUrl: string | null = null
     let cancelled = false
 
-    getBlob(recording.id)
-      .then((blob) => {
-        if (cancelled) return
-        if (!blob) {
-          setMissing(true)
-          return
-        }
-        objectUrl = URL.createObjectURL(blob)
-        setUrl(objectUrl)
-      })
-      .catch(() => {
-        if (!cancelled) setMissing(true)
-      })
+    // Con `storagePath` el audio vive en Supabase y se reproduce con una URL
+    // firmada; sin él es una grabación del modo local, en IndexedDB.
+    const load = recording.storagePath
+      ? signedUrlFor(recording.storagePath).then((signed) => {
+          if (!cancelled) setUrl(signed)
+        })
+      : getBlob(recording.id).then((blob) => {
+          if (cancelled) return
+          if (!blob) {
+            setMissing(true)
+            return
+          }
+          objectUrl = URL.createObjectURL(blob)
+          setUrl(objectUrl)
+        })
+
+    load.catch(() => {
+      if (!cancelled) setMissing(true)
+    })
 
     return () => {
       cancelled = true
       // Sin esto el blob queda retenido en memoria mientras viva la pestaña.
       if (objectUrl) URL.revokeObjectURL(objectUrl)
     }
-  }, [recording.id])
+  }, [recording.id, recording.storagePath])
 
   function download() {
     if (!url) return
@@ -77,7 +84,9 @@ export function RecordingItem({ recording, date, index, onDelete }: RecordingIte
       {missing ? (
         <p className="mt-3 flex items-center gap-2 text-xs text-negative">
           <TriangleAlert className="size-3.5 shrink-0" />
-          El audio no está en este navegador. Los backups JSON no incluyen las grabaciones.
+          {recording.storagePath
+            ? 'No pude traer el audio del servidor.'
+            : 'El audio no está en este navegador.'}
         </p>
       ) : url ? (
         <audio controls src={url} className="mt-3 h-9 w-full" preload="metadata" />

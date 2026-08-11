@@ -52,7 +52,10 @@ function diffByKey<T>(prev: Record<string, T>, next: Record<string, T>): {
 }
 
 /** Devuelve las marcas de hábito agregadas y quitadas entre dos estados. */
-function diffHabitLogs(prev: AppData['habitLogs'], next: AppData['habitLogs']) {
+function diffHabitLogs(
+  prev: AppData['habitLogs'],
+  next: AppData['habitLogs'],
+): { added: Array<{ habitId: ID; day: string }>; removed: Array<{ habitId: ID; day: string }> } {
   const added: Array<{ habitId: ID; day: string }> = []
   const removed: Array<{ habitId: ID; day: string }> = []
 
@@ -102,7 +105,11 @@ export async function pushChanges(
     await run('borrar hábitos', supabase.from('habits').delete().in('id', habits.deletes))
   }
 
+  // Las marcas de un hábito borrado ya cayeron por cascada: intentar borrarlas
+  // una por una serían decenas de llamadas que no hacen nada.
+  const deletedHabits = new Set(habits.deletes)
   const logs = diffHabitLogs(prev.habitLogs, next.habitLogs)
+  logs.removed = logs.removed.filter((mark) => !deletedHabits.has(mark.habitId))
   if (logs.added.length) {
     await run(
       'marcas',
@@ -205,14 +212,18 @@ export async function pushChanges(
     )
   }
 
-  /* -------------------------------------------------------------- journal */
-  const journal = diffByKey(prev.journal, next.journal)
-  for (const [day, entry] of journal.upserts) {
+  /* -------------------------------------------------------------- journal
+     Sólo se sincroniza `closedAt`. Las grabaciones tienen su propio camino en
+     `remote/audio.ts`: subir un archivo es una operación explícita, lenta y
+     que puede fallar sola, y no puede colgarse de un diff debounceado. */
+  const journalClosed = (entries: AppData['journal']) =>
+    Object.fromEntries(Object.entries(entries).map(([day, e]) => [day, e.closedAt]))
+
+  const journal = diffByKey(journalClosed(prev.journal), journalClosed(next.journal))
+  for (const [day, closedAt] of journal.upserts) {
     await run(
       'journal',
-      supabase
-        .from('journal_entries')
-        .upsert({ user_id: userId, day, closed_at: entry.closedAt }),
+      supabase.from('journal_entries').upsert({ user_id: userId, day, closed_at: closedAt }),
     )
   }
   for (const day of journal.deletes) {

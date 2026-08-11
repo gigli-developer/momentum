@@ -23,7 +23,9 @@ import { ProgressBar } from '@/components/ui/Progress'
 import { cn } from '@/lib/cn'
 import { capitalize, fmt, isFuture, toISO, todayISO } from '@/lib/date'
 import { deleteBlob, formatDuration, putBlob } from '@/lib/media'
+import { deleteRecording, uploadRecording } from '@/lib/remote/audio'
 import { newId } from '@/lib/storage'
+import { useSession } from '@/lib/session'
 import { useStore } from '@/lib/store'
 import { RecordingItem } from './RecordingItem'
 import { useRecorder } from './useRecorder'
@@ -49,25 +51,56 @@ export function JournalPage() {
   const done = dayTasks.filter((t) => t.done).length
   const pct = dayTasks.length === 0 ? 0 : Math.round((done / dayTasks.length) * 100)
 
+  const session = useSession()
+  const userId = session.status === 'signed-in' ? session.userId : null
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [uploading, setUploading] = useState(false)
+
   const recorder = useRecorder({
     onFinish: async ({ blob, durationMs, mimeType }) => {
-      const id = newId()
-      // Primero el blob: si IndexedDB falla, no dejamos metadatos sin audio.
-      await putBlob(id, blob)
-      addJournalRecording(date, {
-        id,
+      const recording = {
+        id: newId(),
         createdAt: new Date().toISOString(),
         durationMs,
         mimeType,
         size: blob.size,
-      })
+      }
+
+      setUploadError(null)
+
+      // Sin sesión la app corre en modo local y el audio queda en IndexedDB.
+      if (!userId) {
+        await putBlob(recording.id, blob)
+        addJournalRecording(date, recording)
+        return
+      }
+
+      setUploading(true)
+      try {
+        const storagePath = await uploadRecording(userId, date, recording, blob)
+        // Recién cuando el audio está arriba se agrega el metadato: si se
+        // agregara antes y fallara la subida, quedaría una lectura que no suena.
+        addJournalRecording(date, { ...recording, storagePath })
+      } catch (cause) {
+        setUploadError(cause instanceof Error ? cause.message : 'No pude subir la grabación')
+      } finally {
+        setUploading(false)
+      }
     },
   })
 
   async function handleDelete(recordingId: string) {
-    await deleteBlob(recordingId).catch(() => {
-      /* Si el blob ya no está, igual sacamos el metadato. */
-    })
+    const recording = recordings.find((r) => r.id === recordingId)
+    setUploadError(null)
+
+    try {
+      if (recording?.storagePath) await deleteRecording(recordingId, recording.storagePath)
+      else await deleteBlob(recordingId)
+    } catch (cause) {
+      setUploadError(cause instanceof Error ? cause.message : 'No pude borrar la grabación')
+      return
+    }
+
     removeJournalRecording(date, recordingId)
   }
 
@@ -196,15 +229,22 @@ export function JournalPage() {
                     {recorder.error ? (
                       <p className="mt-1 text-sm text-negative">{recorder.error}</p>
                     ) : null}
+                    {uploadError ? (
+                      <p className="mt-1 text-sm text-negative">{uploadError}</p>
+                    ) : null}
                   </div>
                   <Button
                     variant="primary"
                     size="lg"
-                    disabled={recorder.state === 'requesting'}
+                    disabled={recorder.state === 'requesting' || uploading}
                     onClick={() => void recorder.start()}
                   >
                     <Mic className="size-4" />
-                    {recorder.state === 'requesting' ? 'Pidiendo permiso…' : 'Grabar lectura'}
+                    {uploading
+                      ? 'Subiendo…'
+                      : recorder.state === 'requesting'
+                        ? 'Pidiendo permiso…'
+                        : 'Grabar lectura'}
                   </Button>
                 </div>
               )}
@@ -282,9 +322,17 @@ export function JournalPage() {
 
           <Panel>
             <p className="text-xs text-ink-muted">
-              Las grabaciones se guardan en este navegador y{' '}
-              <strong className="text-ink">no entran en el backup JSON</strong> de Ajustes. Si te
-              importa conservarlas, descargalas con el botón de cada lectura.
+              {userId ? (
+                <>
+                  Las grabaciones se guardan en tu cuenta, en un bucket privado. Se reproducen con
+                  un enlace temporal: <strong className="text-ink">nadie más puede oírlas</strong>.
+                </>
+              ) : (
+                <>
+                  Sin sesión, las grabaciones quedan sólo en este navegador y{' '}
+                  <strong className="text-ink">no entran en el backup JSON</strong>.
+                </>
+              )}
             </p>
           </Panel>
         </div>
