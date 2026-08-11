@@ -194,25 +194,22 @@ Sin `.env.local`, la app arranca igual contra localStorage y lo dice en la barra
 
 ### Persistencia
 
-Todo el estado se guarda bajo la clave `momentum:v1` en `localStorage`, serializado por el
-middleware `persist` de zustand. `src/lib/storage.ts` es el único archivo que toca esa API: para
-migrar a Supabase, IndexedDB o lo que sea, se reimplementa ahí y ni el store ni los componentes se
-enteran.
+**Supabase es la fuente de verdad.** Con `.env.local` configurado, la app exige login y todo el
+estado vive en Postgres. `localStorage` queda sólo como caché del middleware `persist` de zustand:
+acelera el primer pintado, pero al iniciar sesión se sobrescribe con lo que venga del servidor.
 
-Los datos **no salen del navegador**. Desde Ajustes se puede exportar un backup JSON e importarlo.
+Las grabaciones del journal van a **Supabase Storage**, en un bucket privado, y se reproducen con
+URLs firmadas de una hora. Los metadatos viven en `journal_recordings`.
 
-Las grabaciones del journal son la excepción: los blobs de audio van a **IndexedDB**
-(`src/lib/media.ts`), porque localStorage tiene ~5 MB de tope y base64 los infla un 33%. En el
-store quedan sólo los metadatos (id, duración, tamaño, mime).
-
-> ⚠️ **El backup JSON no incluye los audios.** Son binarios y no entran en el export. Cada
-> grabación tiene su botón de descarga individual. Borrar una grabación limpia las dos capas
-> (metadato y blob), y "Empezar de cero" vacía IndexedDB además del store.
+Sin `.env.local` la app corre en **modo local**: sin login, contra `localStorage`, con los audios en
+IndexedDB (`src/lib/media.ts`). Sirve para probar sin backend, y la barra lateral lo aclara.
 
 ### Datos de ejemplo
 
-La app arranca con un seed determinístico (`src/lib/seed.ts`) generado relativo al día actual, para
-que ninguna pantalla se vea vacía la primera vez. Desde **Ajustes → Empezar de cero** se limpia todo.
+Sólo en modo local. Con Supabase configurado, la app arranca **vacía** y se hidrata al iniciar
+sesión: sembrar datos de ejemplo ahí haría ver hábitos falsos por un instante, y el sincronizador
+los subiría a la cuenta. El seed vive en `src/lib/seed.ts`, es determinístico y se genera relativo
+al día actual.
 
 ---
 
@@ -235,16 +232,57 @@ Decisiones que se apartan a propósito del mockup original:
 
 ---
 
-## Estado actual y qué sigue
+## Estado actual
 
-Los ocho módulos están implementados y funcionan sobre datos reales y persistentes.
+Los nueve módulos están implementados y andando contra Supabase.
 
 `src/components/tasks/` contiene `TaskRow` y `DayTaskList`, el par que comparten el planificador y
 el journal para no duplicar la lógica de tareas.
 
-Pendiente:
+### Verificado de punta a punta
 
-- Sincronización multi-dispositivo (Supabase) sobre el adaptador de `storage.ts`
-- PWA / instalable y notificaciones del ritual matutino
-- Reordenar hábitos y tareas con drag & drop
-- Vista mobile dedicada para la grilla mensual de hábitos
+Con una cuenta real, siguiendo cada dato hasta Postgres:
+
+- **Tareas** — padre y subtarea con el `parent_id` correcto, estrella y nota que persisten,
+  completar el padre arrastra la subtarea, tareas de días futuros
+- **Hábitos** — alta, marca del día, y borrado que se lleva sus marcas
+- **Journal** — cierre del día, y audio subido, firmado, descargado y reproducido tras recargar sin
+  caché local
+- **Ciclo de cuenta** — alta que siembra perfil, secciones y áreas; baja que limpia todo en cascada
+
+### Lo que NO está probado
+
+- **Grabar audio con micrófono real.** El camino de subida y reproducción sí se verificó inyectando
+  un audio, pero `MediaRecorder` nunca corrió contra un micrófono de verdad.
+- **La conexión con Google.** El OAuth está desplegado y responde bien a los casos de error, pero
+  nadie completó el consentimiento todavía, así que no hay refresh token y Calendar nunca devolvió
+  eventos reales.
+- **El Atajo de iOS / Health Auto Export.** La función `ingest-sleep` está viva y valida tokens,
+  pero nunca recibió un payload real de un teléfono.
+
+## Qué sigue
+
+1. **Google Tasks** — el esquema, el mapeo y el modelo de sincronización están escritos
+   ([docs/google-tasks.md](docs/google-tasks.md)); faltan las funciones de sync y elegir qué listas
+   traer.
+2. **Desplegar** — hoy corre sólo en local. Hace falta una URL fija para el Atajo de sueño, y para
+   poder usarlo desde el celular. Al desplegar hay que actualizar el secreto `APP_URL` en
+   `app_secrets`, o el callback de Google va a seguir redirigiendo a `localhost`.
+3. **Cerrar el registro público** en Authentication → Providers → Email. Es una app de una persona.
+4. PWA / instalable y notificaciones del ritual matutino.
+5. Reordenar hábitos y tareas con drag & drop.
+6. Vista mobile dedicada para la grilla mensual de hábitos.
+
+## Para retomar en otra sesión
+
+Lo que no está en el repo y hace falta saber:
+
+| | |
+| --- | --- |
+| Proyecto Supabase | `bktawrshipxodfpacjoa` — esquema aplicado, 5 Edge Functions desplegadas |
+| Credenciales del cliente | En `.env.local`, que está gitignoreado. Ver `.env.example` |
+| Secretos de Google | En la tabla `app_secrets`, no en variables de entorno |
+| Design system | Publicado en Claude Design, proyecto *Momentum — Design System* |
+
+Trampa horaria que ya mordió dos veces: `new Date('2026-08-10')` parsea medianoche **UTC**, que en
+Argentina cae el día anterior. Para fechas `YYYY-MM-DD` usar siempre `fromISO` de `src/lib/date.ts`.
